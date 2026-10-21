@@ -1,0 +1,2069 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>バレーボール統計アプリ</title>
+  <style>
+    :root {
+      --primary: #1565C0;
+      --primary-dark: #0D47A1;
+      --primary-light: #1976D2;
+      --accent: #E65100;
+      --accent-light: #FF9800;
+      --success: #2E7D32;
+      --danger: #C62828;
+      --warn: #EF6C00;
+      --teal: #00897B;
+      --bg: #F4F6F9;
+      --card: #FFFFFF;
+      --text: #212121;
+      --text2: #616161;
+      --border: #DCE2E8;
+      --radius: 12px;
+      --shadow: 0 2px 8px rgba(0,0,0,0.08);
+      --shadow-md: 0 4px 16px rgba(0,0,0,0.12);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Kaku Gothic ProN', 'Meiryo', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+    /* ===== COMMON ===== */
+    .hidden { display: none !important; }
+    .screen { display: flex; flex-direction: column; min-height: 100vh; }
+    .header {
+      background: var(--primary);
+      color: #fff;
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: var(--shadow);
+    }
+    .header h1 { font-size: 1.05rem; font-weight: 700; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .header-btn {
+      background: rgba(255,255,255,0.18);
+      border: none;
+      color: #fff;
+      border-radius: 8px;
+      padding: 7px 12px;
+      font-size: 0.85rem;
+      cursor: pointer;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+    .header-btn:active { background: rgba(255,255,255,0.35); }
+    .content { flex: 1; padding: 14px; }
+    .scroll-content { flex: 1; overflow-y: auto; }
+
+    /* ===== BUTTONS ===== */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border: none;
+      border-radius: var(--radius);
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform 0.08s, opacity 0.08s;
+      font-family: inherit;
+      text-align: center;
+      text-decoration: none;
+    }
+    .btn:active { transform: scale(0.96); opacity: 0.85; }
+    .btn-primary { background: var(--primary); color: #fff; }
+    .btn-accent  { background: var(--accent); color: #fff; }
+    .btn-success { background: var(--success); color: #fff; }
+    .btn-danger  { background: var(--danger); color: #fff; }
+    .btn-warn    { background: var(--warn); color: #fff; }
+    .btn-teal    { background: var(--teal); color: #fff; }
+    .btn-outline { background: #fff; color: var(--primary); border: 1.5px solid var(--primary); }
+    .btn-sm { padding: 6px 10px; font-size: 0.8rem; border-radius: 6px; }
+    .btn-md { padding: 10px 16px; font-size: 0.9rem; }
+    .btn-lg { padding: 14px 20px; font-size: 1rem; }
+    .btn-block { width: 100%; }
+
+    /* ===== CARDS ===== */
+    .card {
+      background: var(--card);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      margin-bottom: 14px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+    }
+    .card-header {
+      background: var(--primary);
+      color: #fff;
+      padding: 10px 14px;
+      font-size: 0.88rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .card-body { padding: 12px 14px; }
+
+    /* ===== HOME SCREEN ===== */
+    .match-item {
+      background: var(--card);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 14px;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      cursor: pointer;
+      border: 1px solid var(--border);
+    }
+    .match-item-info { flex: 1; }
+    .match-item-name { font-weight: 700; font-size: 1rem; margin-bottom: 3px; }
+    .match-item-date { color: var(--text2); font-size: 0.8rem; }
+    .match-actions { display: flex; gap: 6px; }
+
+    /* ===== TABS & SET SELECTOR ===== */
+    .tabs {
+      display: flex;
+      background: #fff;
+      border-bottom: 2px solid var(--border);
+      position: sticky;
+      top: 50px;
+      z-index: 90;
+    }
+    .tab-btn {
+      flex: 1;
+      padding: 12px 4px;
+      border: none;
+      background: transparent;
+      font-family: inherit;
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: var(--text2);
+      cursor: pointer;
+      border-bottom: 3px solid transparent;
+      margin-bottom: -2px;
+    }
+    .tab-btn.active {
+      color: var(--primary);
+      border-bottom-color: var(--primary);
+    }
+
+    .set-selector {
+      background: #fff;
+      border-bottom: 1px solid var(--border);
+      padding: 8px 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .set-label {
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: var(--text2);
+      white-space: nowrap;
+    }
+    .set-btns {
+      display: flex;
+      gap: 6px;
+      flex: 1;
+    }
+    .set-btn {
+      flex: 1;
+      padding: 7px 4px;
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      background: #fff;
+      font-family: inherit;
+      font-size: 0.85rem;
+      font-weight: 700;
+      cursor: pointer;
+      color: var(--text2);
+    }
+    .set-btn.active {
+      border-color: var(--accent);
+      background: var(--accent);
+      color: #fff;
+    }
+
+    /* ===== PLAYER SELECTOR & COURT MEMBERS ===== */
+    .player-header-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 8px;
+      margin-top: 4px;
+    }
+    .player-header-title {
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: var(--text2);
+    }
+    .players-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(88px, 1fr));
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+    .player-btn {
+      padding: 12px 6px;
+      border-radius: 10px;
+      font-family: inherit;
+      font-size: 0.95rem;
+      cursor: pointer;
+      text-align: center;
+      word-break: break-all;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+      transition: all 0.1s ease;
+    }
+    .player-btn:active {
+      transform: scale(0.95);
+    }
+
+    /* ===== ACTION BUTTONS ===== */
+    .action-grid {
+      display: grid;
+      gap: 8px;
+      margin-top: 8px;
+    }
+    .action-grid-serve { grid-template-columns: repeat(5, 1fr); }
+    .action-grid-spike { grid-template-columns: repeat(4, 1fr); }
+
+    .action-btn {
+      padding: 16px 2px;
+      border-radius: 12px;
+      font-family: inherit;
+      font-size: 1.15rem;
+      font-weight: 800;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+      transition: transform 0.08s, box-shadow 0.08s;
+    }
+    .action-btn:active { transform: scale(0.94); box-shadow: none; }
+    .action-btn .btn-label { font-size: 0.72rem; font-weight: 700; }
+
+    /* Soft Pastel Action Buttons */
+    .btn-A { background: #E8F5E9; border: 2px solid #81C784; color: #1B5E20; }
+    .btn-A .btn-label { color: #2E7D32; }
+
+    .btn-B { background: #F1F8E9; border: 2px solid #AED581; color: #33691E; }
+    .btn-B .btn-label { color: #558B2F; }
+
+    .btn-C { background: #FFFDE7; border: 2px solid #FFE082; color: #F57F17; }
+    .btn-C .btn-label { color: #F57F17; }
+
+    .btn-D { background: #FFF3E0; border: 2px solid #FFCC80; color: #E65100; }
+    .btn-D .btn-label { color: #EF6C00; }
+
+    .btn-M { background: #FFEBEE; border: 2px solid #EF9A9A; color: #B71C1C; }
+    .btn-M .btn-label { color: #C62828; }
+
+    .btn-point { background: #E3F2FD; border: 2px solid #90CAF9; color: #0D47A1; }
+    .btn-point .btn-label { color: #1565C0; }
+
+    .btn-continue { background: #E0F2F1; border: 2px solid #80CBC4; color: #004D40; }
+    .btn-continue .btn-label { color: #00695C; }
+
+    .btn-miss { background: #FFEBEE; border: 2px solid #EF9A9A; color: #B71C1C; }
+    .btn-miss .btn-label { color: #C62828; }
+
+    .btn-shut { background: #ECEFF1; border: 2px solid #B0BEC5; color: #37474F; }
+    .btn-shut .btn-label { color: #455A64; }
+
+    /* ===== BOTTOM BAR (UNDO & LOGS) ===== */
+    .bottom-bar {
+      position: sticky;
+      bottom: 0;
+      background: #fff;
+      border-top: 1px solid var(--border);
+      padding: 10px 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 -2px 8px rgba(0,0,0,0.06);
+      z-index: 80;
+    }
+    .undo-log {
+      flex: 1;
+      font-size: 0.8rem;
+      color: var(--text2);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* ===== STATS SCREEN ===== */
+    .stats-tabs {
+      display: flex;
+      background: #fff;
+      border-bottom: 2px solid var(--border);
+      overflow-x: auto;
+      position: sticky;
+      top: 50px;
+      z-index: 90;
+    }
+    .stats-tabs::-webkit-scrollbar { display: none; }
+    .stats-tab-btn {
+      flex-shrink: 0;
+      padding: 10px 14px;
+      border: none;
+      background: transparent;
+      font-family: inherit;
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--text2);
+      cursor: pointer;
+      border-bottom: 3px solid transparent;
+      margin-bottom: -2px;
+    }
+    .stats-tab-btn.active {
+      color: var(--primary);
+      border-bottom-color: var(--primary);
+    }
+
+    /* ===== STATS TABLE: MONOCHROME HEADERS & CLEAN BORDERS ===== */
+    .table-container {
+      overflow-x: auto;
+      margin-bottom: 20px;
+      background: #fff;
+      border: 1px solid #757575;
+      border-radius: 4px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+    }
+    .stats-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.84rem;
+      background: #fff;
+      border: 2px solid #000000;
+    }
+    .stats-table th {
+      background: #EAEAEA;
+      color: #000000;
+      padding: 8px 6px;
+      text-align: center;
+      font-weight: 800;
+      border: 1.5px solid #212121;
+      white-space: nowrap;
+    }
+    .stats-table th.table-main-header {
+      background: #D6D6D6;
+      font-size: 0.92rem;
+      font-weight: 900;
+      border: 2px solid #000000;
+    }
+    .stats-table th.sep-col, .stats-table td.sep-col {
+      width: 16px;
+      min-width: 16px;
+      background: #FFFFFF !important;
+      border: none !important;
+      border-top: none !important;
+      border-bottom: none !important;
+      padding: 0 !important;
+    }
+    .stats-table td {
+      padding: 6px 7px;
+      text-align: center;
+      border: 1.5px solid #424242; /* Thick, high-contrast borders */
+      white-space: nowrap;
+      background: #FFFFFF; /* All value cells are white background */
+      color: #000000;
+    }
+    .stats-table td.player-name-cell {
+      text-align: left;
+      font-weight: 900;
+      padding-left: 10px;
+      border: 2px solid #000000;
+      font-size: 0.88rem;
+    }
+    .stats-table tr.ratio-row td {
+      font-size: 0.76rem;
+      color: #212121;
+      background: #FFFFFF;
+      border: 1.5px solid #616161;
+      border-top: 1px dashed #757575; /* Sub-ratio line */
+    }
+    .stats-table tr.ratio-row td.player-name-cell {
+      border: 2px solid #000000;
+      border-top: none;
+    }
+    .stats-table tr.team-total-row td {
+      font-weight: 900;
+      background: #FFFFFF;
+      border: 2px solid #000000;
+      border-top: 3px double #000000;
+    }
+    .stats-table tr.team-total-row td.player-name-cell {
+      background: #D0D0D0 !important;
+      color: #000000 !important;
+      font-size: 0.9rem;
+    }
+
+    .export-card {
+      background: #fff;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      padding: 12px;
+      margin-bottom: 14px;
+    }
+    .export-btns {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    /* ===== MODAL ===== */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 200;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+    .modal {
+      background: #fff;
+      border-radius: 14px;
+      width: 100%;
+      max-width: 480px;
+      max-height: 85vh;
+      display: flex;
+      flex-direction: column;
+      box-shadow: var(--shadow-md);
+      overflow: hidden;
+    }
+    .modal-header {
+      background: var(--primary);
+      color: #fff;
+      padding: 12px 16px;
+      font-weight: 700;
+      font-size: 0.95rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .modal-close { background: none; border: none; color: #fff; font-size: 1.3rem; cursor: pointer; }
+    .modal-body { padding: 16px; overflow-y: auto; flex: 1; }
+    .modal-footer {
+      padding: 10px 16px;
+      display: flex;
+      gap: 8px;
+      justify-content: flex-end;
+      border-top: 1px solid var(--border);
+      background: #FAFAFA;
+    }
+    .form-group { margin-bottom: 12px; }
+    .form-label { display: block; font-size: 0.82rem; font-weight: 700; margin-bottom: 4px; color: var(--text2); }
+    .form-control {
+      width: 100%;
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      padding: 9px 12px;
+      font-size: 0.95rem;
+      font-family: inherit;
+      outline: none;
+    }
+    .form-control:focus { border-color: var(--primary); }
+
+    /* ===== LOG TABLE IN MODAL ===== */
+    .log-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.85rem;
+    }
+    .log-desc { flex: 1; }
+    .log-badge {
+      font-size: 0.75rem;
+      padding: 2px 6px;
+      border-radius: 4px;
+      background: #ECEFF1;
+      font-weight: 700;
+      margin-right: 4px;
+    }
+
+    /* ===== TOAST ===== */
+    #toast {
+      position: fixed;
+      bottom: 75px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(30,30,30,0.92);
+      color: #fff;
+      padding: 9px 18px;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      z-index: 500;
+      opacity: 0;
+      transition: opacity 0.25s;
+      pointer-events: none;
+      white-space: nowrap;
+    }
+    #toast.show { opacity: 1; }
+
+    .notice-box {
+      background: #FFF8E1;
+      border: 1px solid #FFE082;
+      border-radius: 8px;
+      padding: 10px 12px;
+      font-size: 0.8rem;
+      color: #795548;
+      margin-top: 10px;
+      line-height: 1.4;
+    }
+  </style>
+</head>
+<body>
+
+<!-- ============================================================
+     HOME SCREEN
+     ============================================================ -->
+<div id="homeScreen" class="screen">
+  <div class="header">
+    <h1>🏐 バレーボール統計</h1>
+    <button class="header-btn" onclick="openPlayerManage()">選手管理</button>
+  </div>
+  <div class="content scroll-content">
+    <div style="text-align:center; padding: 16px 0 8px; font-size: 2.2rem;">🏐</div>
+    <div style="text-align:center; color: var(--text2); font-size: 0.85rem; margin-bottom: 16px;">
+      サーブ・レセプション・スパイクを簡単リアルタイム記録
+    </div>
+
+    <button class="btn btn-primary btn-lg btn-block" style="margin-bottom:18px;" onclick="openNewMatch()">
+      ＋ 新規試合を作成
+    </button>
+
+    <div style="font-size:0.85rem; font-weight:700; color:var(--text2); margin-bottom:8px;">試合一覧</div>
+    <div id="matchList"></div>
+  </div>
+</div>
+
+<!-- ============================================================
+     INPUT SCREEN
+     ============================================================ -->
+<div id="inputScreen" class="screen hidden">
+  <div class="header">
+    <button class="header-btn" onclick="goHome()">← 戻る</button>
+    <h1 id="inputMatchTitle"></h1>
+    <button class="header-btn" onclick="showStats()">集計表 📊</button>
+  </div>
+
+  <!-- Category Tabs -->
+  <div class="tabs">
+    <button class="tab-btn active" id="tabServe" onclick="switchCat('serve')">サーブ効果率</button>
+    <button class="tab-btn" id="tabReceive" onclick="switchCat('receive')">レセプション</button>
+    <button class="tab-btn" id="tabSpike" onclick="switchCat('spike')">スパイク</button>
+  </div>
+
+  <!-- Set Selector -->
+  <div class="set-selector">
+    <span class="set-label">セット:</span>
+    <div class="set-btns">
+      <button class="set-btn active" id="setBtn1" onclick="selectSet(1)">S1</button>
+      <button class="set-btn" id="setBtn2" onclick="selectSet(2)">S2</button>
+      <button class="set-btn" id="setBtn3" onclick="selectSet(3)">S3</button>
+      <button class="set-btn" id="setBtn4" onclick="selectSet(4)">S4</button>
+      <button class="set-btn" id="setBtn5" onclick="selectSet(5)">S5</button>
+    </div>
+  </div>
+
+  <div class="scroll-content" style="flex:1;">
+    <div class="content">
+
+      <!-- Player Selector -->
+      <div class="player-header-bar">
+        <span class="player-header-title" id="playerListTitle">選手を選択 (コートメンバー)</span>
+        <div style="display:flex; gap:6px;">
+          <button class="btn btn-outline btn-sm" onclick="openSubstituteModal()">⇄ 選手交代</button>
+          <button class="btn btn-outline btn-sm" id="toggleAllPlayersBtn" onclick="toggleAllPlayersView()">全員表示</button>
+        </div>
+      </div>
+      <div class="players-grid" id="playerBtns"></div>
+
+      <!-- Action: Serve -->
+      <div id="inputServe">
+        <div style="font-size:0.82rem; font-weight:700; color:var(--text2); margin-top:8px;">
+          サーブ結果（相手レセプションの質）
+        </div>
+        <div class="action-grid action-grid-serve">
+          <button class="action-btn btn-A" onclick="recordAction('serve','A')">A<span class="btn-label">完璧返球</span></button>
+          <button class="action-btn btn-B" onclick="recordAction('serve','B')">B<span class="btn-label">良い返球</span></button>
+          <button class="action-btn btn-C" onclick="recordAction('serve','C')">C<span class="btn-label">乱れ(2段)</span></button>
+          <button class="action-btn btn-D" onclick="recordAction('serve','D')">D<span class="btn-label">チャンス返球</span></button>
+          <button class="action-btn btn-M" onclick="recordAction('serve','M')">M<span class="btn-label">エース/直接得点</span></button>
+        </div>
+        <div class="notice-box">
+          💡 A=返球完璧、B=トス上げ可、C=2段トス、D=攻撃限定、M=サービスエース（即得点）
+        </div>
+      </div>
+
+      <!-- Action: Reception -->
+      <div id="inputReceive" class="hidden">
+        <div style="font-size:0.82rem; font-weight:700; color:var(--text2); margin-top:8px;">
+          レセプション結果（味方の返球の質）
+        </div>
+        <div class="action-grid action-grid-serve">
+          <button class="action-btn btn-A" onclick="recordAction('receive','A')">A<span class="btn-label">完璧返球</span></button>
+          <button class="action-btn btn-B" onclick="recordAction('receive','B')">B<span class="btn-label">良い返球</span></button>
+          <button class="action-btn btn-C" onclick="recordAction('receive','C')">C<span class="btn-label">乱れ(2段)</span></button>
+          <button class="action-btn btn-D" onclick="recordAction('receive','D')">D<span class="btn-label">チャンス返球</span></button>
+          <button class="action-btn btn-M" onclick="recordAction('receive','M')">M<span class="btn-label">即ミス(被エース)</span></button>
+        </div>
+        <div class="notice-box">
+          💡 A=セッター定位置、B=セッター移動、C=セッター以外が2段、D=返すだけ、M=直接失点
+        </div>
+      </div>
+
+      <!-- Action: Spike -->
+      <div id="inputSpike" class="hidden">
+        <div style="font-size:0.82rem; font-weight:700; color:var(--text2); margin-top:8px;">
+          スパイク結果
+        </div>
+        <div class="action-grid action-grid-spike">
+          <button class="action-btn btn-point" onclick="recordAction('spike','point')">得点<span class="btn-label">決定</span></button>
+          <button class="action-btn btn-continue" onclick="recordAction('spike','continue')">継続<span class="btn-label">相手拾い/返球</span></button>
+          <button class="action-btn btn-miss" onclick="recordAction('spike','miss')">失点<span class="btn-label">アウト/ネット</span></button>
+          <button class="action-btn btn-shut" onclick="recordAction('spike','shut')">シャット<span class="btn-label">被ブロック</span></button>
+        </div>
+        <div class="notice-box">
+          💡 「継続」は決まらなかったが相手に拾われた・ラリーが続いた打数です（総本数に算入）。
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Bottom Bar: Undo & Log Manager -->
+  <div class="bottom-bar">
+    <div class="undo-log" id="undoLog">操作ログなし</div>
+    <button class="btn btn-warn btn-sm" onclick="undoLast()">↩ 1つ取消</button>
+    <button class="btn btn-primary btn-sm" onclick="openLogsModal()">📋 全履歴・編集</button>
+  </div>
+</div>
+
+<!-- ============================================================
+     STATS SCREEN
+     ============================================================ -->
+<div id="statsScreen" class="screen hidden">
+  <div class="header">
+    <button class="header-btn" onclick="backToInput()">← 入力へ戻る</button>
+    <h1 id="statsMatchTitle">集計表</h1>
+    <button class="header-btn" onclick="renderStats()">🔄 更新</button>
+  </div>
+
+  <!-- Stats set tabs -->
+  <div class="stats-tabs">
+    <button class="stats-tab-btn active" id="stTabAll" onclick="switchStatsTab('all')">全セット合計</button>
+    <button class="stats-tab-btn" id="stTabS1" onclick="switchStatsTab('s1')">第1セット</button>
+    <button class="stats-tab-btn" id="stTabS2" onclick="switchStatsTab('s2')">第2セット</button>
+    <button class="stats-tab-btn" id="stTabS3" onclick="switchStatsTab('s3')">第3セット</button>
+    <button class="stats-tab-btn" id="stTabS4" onclick="switchStatsTab('s4')">第4セット</button>
+    <button class="stats-tab-btn" id="stTabS5" onclick="switchStatsTab('s5')">第5セット</button>
+  </div>
+
+  <div class="scroll-content" style="flex:1;">
+    <div class="content">
+
+      <!-- Export Area -->
+      <div class="export-card">
+        <div style="font-weight:700; font-size:0.88rem; margin-bottom:8px;">📊 データ出力 / スプレッドシート連携</div>
+        <div class="export-btns">
+          <button class="btn btn-success btn-md" onclick="copyForSpreadsheet()">📋 Googleスプレッドシート用にコピー</button>
+          <button class="btn btn-primary btn-md" onclick="exportOfficialExcel()">📥 Excel出力 (警告なし形式)</button>
+          <button class="btn btn-teal btn-md" onclick="exportCSV()">📥 CSVダウンロード</button>
+        </div>
+        <div class="notice-box" style="margin-top:8px;">
+          💡 <strong>「Googleスプレッドシート用にコピー」</strong>を押して、Googleスプレッドシートを開いて貼り付け(Ctrl+V / Cmd+V)すると、一瞬で色付きの綺麗な表が完成します！
+        </div>
+      </div>
+
+      <div id="statsContent"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     PLAYER MANAGE SCREEN
+     ============================================================ -->
+<div id="playerScreen" class="screen hidden">
+  <div class="header">
+    <button class="header-btn" onclick="closePlayerManage()">← 戻る</button>
+    <h1>選手名簿の管理</h1>
+  </div>
+  <div class="content scroll-content">
+    <div style="display:flex;gap:8px;margin-bottom:14px;">
+      <input type="text" class="form-control" id="newPlayerName" placeholder="新しい選手名 (例: かなえ)" style="flex:1;">
+      <button class="btn btn-primary btn-md" onclick="addPlayer()">追加</button>
+    </div>
+    <div style="font-size:0.82rem; font-weight:700; color:var(--text2); margin-bottom:8px;">登録選手一覧</div>
+    <ul id="playerManageList" style="list-style:none;"></ul>
+  </div>
+</div>
+
+<!-- ============================================================
+     MODAL: SUBSTITUTE (選手交代)
+     ============================================================ -->
+<div class="modal-overlay hidden" id="substituteModal">
+  <div class="modal">
+    <div class="modal-header">
+      <span>第<span id="subSetNum">1</span>セットのコートメンバー変更</span>
+      <button class="modal-close" onclick="closeSubstituteModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:0.82rem; color:var(--text2); margin-bottom:12px;">
+        現在コートに出ている選手（スタメン7名）にチェックを入れてください。
+      </p>
+      <div id="substituteList" style="display:flex; flex-direction:column; gap:8px;"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline btn-md" onclick="closeSubstituteModal()">キャンセル</button>
+      <button class="btn btn-primary btn-md" onclick="saveSubstituteMembers()">設定を反映</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     MODAL: ALL LOGS & EDIT (全履歴の閲覧・修正・削除)
+     ============================================================ -->
+<div class="modal-overlay hidden" id="logsModal">
+  <div class="modal" style="max-width:560px;">
+    <div class="modal-header">
+      <span>📋 記録履歴と修正 (全<span id="logTotalCount">0</span>件)</span>
+      <button class="modal-close" onclick="closeLogsModal()">✕</button>
+    </div>
+    <div style="padding:10px 14px; background:#ECEFF1; display:flex; gap:8px; align-items:center;">
+      <span style="font-size:0.8rem; font-weight:700;">絞込:</span>
+      <select class="form-control" id="logFilterSet" onchange="renderLogsList()" style="width:auto; padding:4px 8px; font-size:0.82rem;">
+        <option value="all">全セット</option>
+        <option value="1">S1</option>
+        <option value="2">S2</option>
+        <option value="3">S3</option>
+        <option value="4">S4</option>
+        <option value="5">S5</option>
+      </select>
+    </div>
+    <div class="modal-body" id="logsListContainer"></div>
+    <div class="modal-footer">
+      <button class="btn btn-primary btn-md" onclick="closeLogsModal()">閉じる</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     MODAL: EDIT RECORD (単一レコード編集)
+     ============================================================ -->
+<div class="modal-overlay hidden" id="editRecordModal">
+  <div class="modal">
+    <div class="modal-header">
+      <span>記録の編集</span>
+      <button class="modal-close" onclick="closeEditRecordModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="editRecordId">
+      <div class="form-group">
+        <label class="form-label">セット</label>
+        <select class="form-control" id="editRecordSet">
+          <option value="1">第1セット</option>
+          <option value="2">第2セット</option>
+          <option value="3">第3セット</option>
+          <option value="4">第4セット</option>
+          <option value="5">第5セット</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">選手</label>
+        <select class="form-control" id="editRecordPlayer"></select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">項目</label>
+        <select class="form-control" id="editRecordCat" onchange="updateEditValOptions()">
+          <option value="serve">サーブ効果率</option>
+          <option value="receive">レセプション</option>
+          <option value="spike">スパイク</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">評価・結果</label>
+        <select class="form-control" id="editRecordVal"></select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline btn-md" onclick="closeEditRecordModal()">キャンセル</button>
+      <button class="btn btn-primary btn-md" onclick="saveRecordEdit()">変更を保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     MODAL: NEW MATCH
+     ============================================================ -->
+<div class="modal-overlay hidden" id="newMatchModal">
+  <div class="modal">
+    <div class="modal-header">
+      <span>新規試合作成</span>
+      <button class="modal-close" onclick="closeNewMatch()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">試合名 / 対戦相手</label>
+        <input type="text" class="form-control" id="matchName" placeholder="例: ○○高校戦, 練習試合A">
+      </div>
+      <div class="form-group">
+        <label class="form-label">日付</label>
+        <input type="date" class="form-control" id="matchDate">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline btn-md" onclick="closeNewMatch()">キャンセル</button>
+      <button class="btn btn-primary btn-md" onclick="createMatch()">作成</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     MODAL: DELETE MATCH CONFIRM
+     ============================================================ -->
+<div class="modal-overlay hidden" id="deleteMatchModal">
+  <div class="modal">
+    <div class="modal-header">
+      <span>試合の削除確認</span>
+      <button class="modal-close" onclick="closeDeleteMatch()">✕</button>
+    </div>
+    <div class="modal-body">
+      <p id="deleteMatchMsg" style="font-size:0.92rem; line-height:1.4;"></p>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline btn-md" onclick="closeDeleteMatch()">キャンセル</button>
+      <button class="btn btn-danger btn-md" onclick="confirmDeleteMatch()">削除する</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div id="toast"></div>
+
+<!-- ============================================================
+     SCRIPT
+     ============================================================ -->
+<script>
+// ============================================================
+// STORAGE
+// ============================================================
+function loadPlayers() {
+  try { return JSON.parse(localStorage.getItem('vb_players') || '[]'); } catch { return []; }
+}
+function savePlayers(arr) { localStorage.setItem('vb_players', JSON.stringify(arr)); }
+
+function loadMatches() {
+  try { return JSON.parse(localStorage.getItem('vb_matches') || '[]'); } catch { return []; }
+}
+function saveMatches(arr) { localStorage.setItem('vb_matches', JSON.stringify(arr)); }
+
+function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
+
+// ============================================================
+
+// ============================================================
+// ============================================================
+let currentMatchId = null;
+let currentCat = 'serve';     // 'serve' | 'receive' | 'spike'
+let selectedPlayer = null;
+let currentSet = 1;           // 1~5
+let currentStatsTab = 'all';   // 'all' | 's1'~'s5'
+let showAllPlayersMode = false;
+let deleteTargetId = null;
+
+function getCurrentMatch() {
+  const ms = loadMatches();
+  return ms.find(m => m.id === currentMatchId) || null;
+}
+function updateMatch(match) {
+  const ms = loadMatches();
+  const idx = ms.findIndex(m => m.id === match.id);
+  if (idx >= 0) ms[idx] = match; else ms.push(match);
+  saveMatches(ms);
+}
+
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(window._toastTimer);
+  window._toastTimer = setTimeout(() => el.classList.remove('show'), 2200);
+}
+
+function showScreen(id) {
+  ['homeScreen','inputScreen','statsScreen','playerScreen'].forEach(s => {
+    document.getElementById(s).classList.toggle('hidden', s !== id);
+  });
+}
+
+function goHome() {
+  currentMatchId = null;
+  selectedPlayer = null;
+  renderMatchList();
+  showScreen('homeScreen');
+}
+
+function showStats() {
+  document.getElementById('statsMatchTitle').textContent =
+    document.getElementById('inputMatchTitle').textContent + ' - 集計';
+  renderStats();
+  showScreen('statsScreen');
+}
+
+function backToInput() {
+  showScreen('inputScreen');
+}
+
+// ============================================================
+// HOME & MATCHES
+// ============================================================
+function renderMatchList() {
+  const list = document.getElementById('matchList');
+  const ms = loadMatches();
+  if (ms.length === 0) {
+    list.innerHTML = '<div style="text-align:center; color:#9e9e9e; padding:30px 0;">登録された試合はありません</div>';
+    return;
+  }
+  const sorted = [...ms].sort((a,b) => (b.date || '').localeCompare(a.date || '') || b.id.localeCompare(a.id));
+  list.innerHTML = sorted.map(m => `
+    <div class="match-item" onclick="openMatch('${m.id}')">
+      <div style="font-size:1.6rem;">🏐</div>
+      <div class="match-item-info">
+        <div class="match-item-name">${esc(m.name)}</div>
+        <div class="match-item-date">${esc(m.date)} &nbsp;|&nbsp; 記録: ${m.records ? m.records.length : 0}件</div>
+      </div>
+      <div class="match-actions" onclick="event.stopPropagation()">
+        <button class="btn btn-sm btn-danger" onclick="askDeleteMatch('${m.id}','${esc(m.name)}')">削除</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function openMatch(id) {
+  currentMatchId = id;
+  const m = getCurrentMatch();
+  document.getElementById('inputMatchTitle').textContent = `${m.name} (${m.date})`;
+  currentCat = 'serve';
+  currentSet = 1;
+  selectedPlayer = null;
+  showAllPlayersMode = false;
+  switchCat('serve');
+  selectSet(1);
+  renderPlayerBtns();
+  updateUndoBar();
+  showScreen('inputScreen');
+}
+
+function openNewMatch() {
+  const today = new Date().toISOString().slice(0, 10);
+  document.getElementById('matchDate').value = today;
+  document.getElementById('matchName').value = '';
+  document.getElementById('newMatchModal').classList.remove('hidden');
+}
+function closeNewMatch() { document.getElementById('newMatchModal').classList.add('hidden'); }
+
+function createMatch() {
+  const name = document.getElementById('matchName').value.trim();
+  const date = document.getElementById('matchDate').value;
+  if (!name) { toast('試合名を入力してください'); return; }
+  const allPlayers = loadPlayers();
+  const defaultStarters = allPlayers.slice(0, 7);
+  const m = {
+    id: uid(),
+    name,
+    date,
+    courtPlayers: { 1: [...defaultStarters], 2: [...defaultStarters], 3: [...defaultStarters], 4: [...defaultStarters], 5: [...defaultStarters] },
+    records: []
+  };
+  const ms = loadMatches();
+  ms.push(m);
+  saveMatches(ms);
+  closeNewMatch();
+  openMatch(m.id);
+}
+
+function askDeleteMatch(id, name) {
+  deleteTargetId = id;
+  document.getElementById('deleteMatchMsg').textContent = `「${name}」を完全に削除しますか？記録データも削除されます。`;
+  document.getElementById('deleteMatchModal').classList.remove('hidden');
+}
+function closeDeleteMatch() { document.getElementById('deleteMatchModal').classList.add('hidden'); }
+function confirmDeleteMatch() {
+  if (!deleteTargetId) return;
+  const ms = loadMatches().filter(m => m.id !== deleteTargetId);
+  saveMatches(ms);
+  closeDeleteMatch();
+  renderMatchList();
+  toast('試合を削除しました');
+}
+
+// ============================================================
+// SET SELECTION
+// ============================================================
+function selectSet(n) {
+  currentSet = n;
+  for (let i = 1; i <= 5; i++) {
+    document.getElementById(`setBtn${i}`).classList.toggle('active', i === currentSet);
+  }
+  renderPlayerBtns();
+  updateUndoBar();
+}
+
+// ============================================================
+// PLAYERS & COURT STARTERS (スタメン・交代管理)
+// ============================================================
+function getCourtPlayers(match, setNum) {
+  if (!match.courtPlayers) match.courtPlayers = {};
+  if (!match.courtPlayers[setNum] || match.courtPlayers[setNum].length === 0) {
+    const all = loadPlayers();
+    match.courtPlayers[setNum] = all.slice(0, 7);
+    updateMatch(match);
+  }
+  return match.courtPlayers[setNum];
+}
+
+function renderPlayerBtns() {
+  const match = getCurrentMatch();
+  const all = loadPlayers();
+  const container = document.getElementById('playerBtns');
+
+  if (all.length === 0) {
+    container.innerHTML = '<div style="color:#9e9e9e;font-size:0.85rem;grid-column:1/-1;">選手が登録されていません。「選手管理」から登録してください。</div>';
+    return;
+  }
+
+  let displayPlayers = all;
+  if (!showAllPlayersMode && match) {
+    const court = getCourtPlayers(match, currentSet);
+    displayPlayers = court.length > 0 ? court : all;
+    document.getElementById('playerListTitle').textContent = `コート上の選手 (第${currentSet}セット: ${displayPlayers.length}名)`;
+    document.getElementById('toggleAllPlayersBtn').textContent = '全員表示';
+  } else {
+    document.getElementById('playerListTitle').textContent = `全登録選手 (${all.length}名)`;
+    document.getElementById('toggleAllPlayersBtn').textContent = 'コートのみ';
+  }
+
+  // 選択中選手がリストにない場合の自動選択
+  if (!selectedPlayer || !displayPlayers.includes(selectedPlayer)) {
+    selectedPlayer = displayPlayers[0] || null;
+  }
+
+  container.innerHTML = displayPlayers.map(p => {
+    const col = getPlayerColor(p);
+    const isSel = selectedPlayer === p;
+    // Soft pastel style: selected has soft pastel background with distinct 2.5px border and bold black text
+    const btnStyle = isSel
+      ? `background-color: ${col.bg}; color: #000000; border: 2.5px solid ${col.border}; font-weight: 900; box-shadow: 0 2px 8px rgba(0,0,0,0.12);`
+      : `background-color: #FFFFFF; color: #424242; border: 1.5px solid #D0D0D0; font-weight: 600;`;
+    const checkIcon = isSel ? '✔ ' : '';
+    return `
+      <button class="player-btn" style="${btnStyle}" onclick="selectPlayer('${esc(p)}')">${checkIcon}${esc(p)}</button>
+    `;
+  }).join('');
+}
+
+function selectPlayer(name) {
+  selectedPlayer = name;
+  renderPlayerBtns();
+}
+
+function toggleAllPlayersView() {
+  showAllPlayersMode = !showAllPlayersMode;
+  renderPlayerBtns();
+}
+
+// 選手交代モーダル
+function openSubstituteModal() {
+  const match = getCurrentMatch();
+  if (!match) return;
+  document.getElementById('subSetNum').textContent = currentSet;
+  const all = loadPlayers();
+  const currentCourt = getCourtPlayers(match, currentSet);
+
+  const container = document.getElementById('substituteList');
+  container.innerHTML = all.map(p => {
+    const checked = currentCourt.includes(p) ? 'checked' : '';
+    return `
+      <label style="display:flex; align-items:center; gap:10px; background:#F5F7FA; padding:10px 14px; border-radius:8px; cursor:pointer;">
+        <input type="checkbox" name="courtMember" value="${esc(p)}" ${checked} style="width:18px; height:18px;">
+        <span style="font-weight:700; font-size:0.95rem;">${esc(p)}</span>
+      </label>
+    `;
+  }).join('');
+
+  document.getElementById('substituteModal').classList.remove('hidden');
+}
+function closeSubstituteModal() { document.getElementById('substituteModal').classList.add('hidden'); }
+
+function saveSubstituteMembers() {
+  const match = getCurrentMatch();
+  if (!match) return;
+  const checkboxes = document.querySelectorAll('input[name="courtMember"]:checked');
+  const selected = Array.from(checkboxes).map(c => c.value);
+
+  if (selected.length === 0) {
+    toast('少なくとも1名選択してください');
+    return;
+  }
+
+  if (!match.courtPlayers) match.courtPlayers = {};
+  match.courtPlayers[currentSet] = selected;
+  updateMatch(match);
+  closeSubstituteModal();
+  showAllPlayersMode = false;
+  renderPlayerBtns();
+  toast(`第${currentSet}セットのメンバーを変更しました (${selected.length}名)`);
+}
+
+// ============================================================
+// RECORD ACTIONS (入力処理)
+// ============================================================
+function switchCat(cat) {
+  currentCat = cat;
+  ['serve','receive','spike'].forEach(c => {
+    document.getElementById(`tab${c.charAt(0).toUpperCase()+c.slice(1)}`).classList.toggle('active', c === cat);
+    document.getElementById(`input${c.charAt(0).toUpperCase()+c.slice(1)}`).classList.toggle('hidden', c !== cat);
+  });
+}
+
+function recordAction(cat, val) {
+  if (!selectedPlayer) { toast('選手を選択してください'); return; }
+  const match = getCurrentMatch();
+  if (!match) return;
+
+  const rec = {
+    id: uid(),
+    player: selectedPlayer,
+    cat,
+    val,
+    set: currentSet,
+    ts: Date.now()
+  };
+  if (!match.records) match.records = [];
+  match.records.push(rec);
+  updateMatch(match);
+
+  updateUndoBar(rec);
+
+  const catLabel = cat === 'serve' ? 'サーブ' : cat === 'receive' ? 'レセプション' : 'スパイク';
+  const valLabel = formatVal(cat, val);
+  toast(`[S${currentSet}] ${selectedPlayer}：${catLabel} [${valLabel}]`);
+}
+
+function formatVal(cat, val) {
+  if (cat === 'spike') {
+    if (val === 'point') return '得点';
+    if (val === 'continue') return '継続';
+    if (val === 'miss') return '失点';
+    if (val === 'shut') return 'シャット';
+  }
+  return val;
+}
+
+// ============================================================
+// UNDO & LOG MANAGEMENT (全履歴・編集・削除)
+// ============================================================
+function updateUndoBar(rec) {
+  const match = getCurrentMatch();
+  const el = document.getElementById('undoLog');
+  if (!match || !match.records || match.records.length === 0) {
+    el.textContent = '操作ログなし';
+    return;
+  }
+  const last = rec || match.records[match.records.length - 1];
+  const catLabel = last.cat === 'serve' ? 'サーブ' : last.cat === 'receive' ? 'レセプション' : 'スパイク';
+  const valLabel = formatVal(last.cat, last.val);
+  el.textContent = `直前: [S${last.set || 1}] ${last.player} / ${catLabel} [${valLabel}]`;
+}
+
+function undoLast() {
+  const match = getCurrentMatch();
+  if (!match || !match.records || match.records.length === 0) {
+    toast('取り消すデータがありません');
+    return;
+  }
+  const popped = match.records.pop();
+  updateMatch(match);
+  updateUndoBar();
+  toast(`取り消しました: ${popped.player} [${formatVal(popped.cat, popped.val)}]`);
+}
+
+// 全履歴モーダル
+function openLogsModal() {
+  renderLogsList();
+  document.getElementById('logsModal').classList.remove('hidden');
+}
+function closeLogsModal() { document.getElementById('logsModal').classList.add('hidden'); }
+
+function renderLogsList() {
+  const match = getCurrentMatch();
+  const container = document.getElementById('logsListContainer');
+  const countEl = document.getElementById('logTotalCount');
+  if (!match || !match.records) { container.innerHTML = ''; countEl.textContent = '0'; return; }
+
+  const filterSet = document.getElementById('logFilterSet').value;
+  let records = [...match.records];
+  if (filterSet !== 'all') {
+    const s = parseInt(filterSet);
+    records = records.filter(r => (r.set || 1) === s);
+  }
+  countEl.textContent = records.length;
+
+  if (records.length === 0) {
+    container.innerHTML = '<div style="text-align:center; padding:20px; color:#9e9e9e;">該当する記録はありません</div>';
+    return;
+  }
+
+  // 降順
+  const reversed = [...records].reverse();
+  container.innerHTML = reversed.map(r => {
+    const time = new Date(r.ts).toLocaleTimeString('ja-JP', { hour:'2-digit', minute:'2-digit', second:'2-digit' });
+    const catLabel = r.cat === 'serve' ? 'サーブ' : r.cat === 'receive' ? 'レセプション' : 'スパイク';
+    const valLabel = formatVal(r.cat, r.val);
+    return `
+      <div class="log-item">
+        <div class="log-desc">
+          <span class="log-badge">第${r.set || 1}S</span>
+          <strong>${esc(r.player)}</strong>
+          <span style="color:var(--text2); margin:0 4px;">-</span>
+          <span>${catLabel} [${valLabel}]</span>
+          <span style="font-size:0.75rem; color:#9e9e9e; margin-left:6px;">(${time})</span>
+        </div>
+        <button class="btn btn-outline btn-sm" onclick="openEditRecordModal('${r.id}')">編集</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteSingleRecord('${r.id}')">削除</button>
+      </div>
+    `;
+  }).join('');
+}
+
+function deleteSingleRecord(id) {
+  const match = getCurrentMatch();
+  if (!match || !match.records) return;
+  const idx = match.records.findIndex(r => r.id === id);
+  if (idx < 0) return;
+  const item = match.records[idx];
+  match.records.splice(idx, 1);
+  updateMatch(match);
+  updateUndoBar();
+  renderLogsList();
+  toast(`削除しました: ${item.player} [${formatVal(item.cat, item.val)}]`);
+}
+
+// レコード編集モーダル
+function openEditRecordModal(id) {
+  const match = getCurrentMatch();
+  if (!match || !match.records) return;
+  const r = match.records.find(x => x.id === id);
+  if (!r) return;
+
+  document.getElementById('editRecordId').value = r.id;
+  document.getElementById('editRecordSet').value = r.set || 1;
+
+  // 選手選択肢
+  const allPlayers = loadPlayers();
+  const playerSelect = document.getElementById('editRecordPlayer');
+  playerSelect.innerHTML = allPlayers.map(p => `<option value="${esc(p)}">${esc(p)}</option>`).join('');
+  playerSelect.value = r.player;
+
+  // 種別
+  document.getElementById('editRecordCat').value = r.cat;
+  updateEditValOptions(r.val);
+
+  document.getElementById('editRecordModal').classList.remove('hidden');
+}
+function closeEditRecordModal() { document.getElementById('editRecordModal').classList.add('hidden'); }
+
+function updateEditValOptions(currentVal) {
+  const cat = document.getElementById('editRecordCat').value;
+  const valSelect = document.getElementById('editRecordVal');
+  let options = [];
+  if (cat === 'spike') {
+    options = [
+      { val: 'point', text: '得点' },
+      { val: 'continue', text: '継続 (相手拾い)' },
+      { val: 'miss', text: '失点 (ミス)' },
+      { val: 'shut', text: 'シャット (被ブロック)' }
+    ];
+  } else {
+    options = [
+      { val: 'A', text: 'A (完璧)' },
+      { val: 'B', text: 'B (良い)' },
+      { val: 'C', text: 'C (普通/2段)' },
+      { val: 'D', text: 'D (悪い)' },
+      { val: 'M', text: 'M (ミス/エース)' }
+    ];
+  }
+  valSelect.innerHTML = options.map(o => `<option value="${o.val}">${o.text}</option>`).join('');
+  if (currentVal) valSelect.value = currentVal;
+}
+
+function saveRecordEdit() {
+  const id = document.getElementById('editRecordId').value;
+  const match = getCurrentMatch();
+  if (!match || !match.records) return;
+  const idx = match.records.findIndex(x => x.id === id);
+  if (idx < 0) return;
+
+  match.records[idx].set = parseInt(document.getElementById('editRecordSet').value);
+  match.records[idx].player = document.getElementById('editRecordPlayer').value;
+  match.records[idx].cat = document.getElementById('editRecordCat').value;
+  match.records[idx].val = document.getElementById('editRecordVal').value;
+
+  updateMatch(match);
+  updateUndoBar();
+  closeEditRecordModal();
+  renderLogsList();
+  toast('記録を変更しました');
+}
+
+// ============================================================
+// STATS CALCULATION & TABLES (チーム合計・パーセントAB)
+// ============================================================
+
+const PLAYER_PALETTE = [
+  { bg: '#FFD1DC', border: '#E91E63', text: '#000000' }, // かなえ: 薄ピンク
+  { bg: '#B2EBF2', border: '#00ACC1', text: '#000000' }, // ちづる: 薄水色
+  { bg: '#FFF59D', border: '#FBC02D', text: '#000000' }, // くるみ: 薄黄色
+  { bg: '#C8E6C9', border: '#4CAF50', text: '#000000' }, // ななみ: 薄緑
+  { bg: '#D1C4E9', border: '#7E57C2', text: '#000000' }, // りみ: 薄紫
+  { bg: '#FFE082', border: '#FB8C00', text: '#000000' }, // まりん: 薄オレンジ
+  { bg: '#DCEDC8', border: '#7CB342', text: '#000000' }, // さち: ライム
+  { bg: '#F8BBD0', border: '#EC407A', text: '#000000' }, // みちる: ローズ
+  { bg: '#C5CAE9', border: '#5C6BC0', text: '#000000' }, // はるき: ラベンダーブルー
+  { bg: '#FFCCBC', border: '#FF5722', text: '#000000' }, // ここ: サーモン
+  { bg: '#B2DFDB', border: '#009688', text: '#000000' }, // りお: ミント
+  { bg: '#CFD8DC', border: '#607D8B', text: '#000000' }  // その他: シルバー
+];
+
+function getPlayerColor(name) {
+  const players = loadPlayers();
+  let idx = players.indexOf(name);
+  if (idx < 0) {
+    let h = 0;
+    for (let i = 0; i < (name || '').length; i++) h = (h * 31 + name.charCodeAt(i)) & 0xffffffff;
+    idx = Math.abs(h);
+  }
+  return PLAYER_PALETTE[idx % PLAYER_PALETTE.length];
+}
+
+function fmtPct(num, den) {
+  if (!den || den === 0) return '0.0%';
+  return ((num / den) * 100).toFixed(1) + '%';
+}
+function fmtValPct(val) {
+  if (val === null || val === undefined || isNaN(val)) return '0.0%';
+  return (val * 100).toFixed(1) + '%';
+}
+
+
+// ============================================================
+// ATTACHMENT-IDENTICAL TABLE RENDERING (添付ファイル完全準拠)
+// ============================================================
+
+function getSetRecords(records, s) {
+  return records.filter(r => (r.set || 1) === s);
+}
+
+function calcPlayerServe(records, cat, p) {
+  const recs = records.filter(r => r.player === p && r.cat === cat);
+  const A = recs.filter(r => r.val === 'A').length;
+  const B = recs.filter(r => r.val === 'B').length;
+  const C = recs.filter(r => r.val === 'C').length;
+  const D = recs.filter(r => r.val === 'D').length;
+  const M = recs.filter(r => r.val === 'M').length;
+  const total = A + B + C + D + M;
+  const ab = A + B;
+  const successRate = total > 0 ? (A * 1 + B * 0.5) / total : 0;
+  const effRate = total > 0 ? (A + B - M) / total : 0;
+  return { A, B, C, D, M, total, ab, successRate, effRate };
+}
+
+function calcPlayerSpike(records, p) {
+  const recs = records.filter(r => r.player === p && r.cat === 'spike');
+  const point = recs.filter(r => r.val === 'point').length;
+  const cont = recs.filter(r => r.val === 'continue').length;
+  const miss = recs.filter(r => r.val === 'miss').length;
+  const shut = recs.filter(r => r.val === 'shut').length;
+  const total = point + cont + miss + shut;
+  const decRate = total > 0 ? point / total : 0;
+  const effRate = total > 0 ? (point - miss) / total : 0;
+  return { point, cont, miss, shut, total, decRate, effRate };
+}
+
+function renderServeTableIdentical(setNum, cat, title) {
+  const match = getCurrentMatch();
+  if (!match) return '';
+  const allRecords = match.records || [];
+  const setRecords = getSetRecords(allRecords, setNum);
+  const players = loadPlayers();
+
+  // Active players with data in either set or all
+  const activePlayers = players.filter(p => {
+    return allRecords.some(r => r.player === p && r.cat === cat);
+  });
+  const displayPlayers = activePlayers.length > 0 ? activePlayers : players.slice(0, 8);
+
+  let setTotal = { A:0, B:0, C:0, D:0, M:0, total:0, ab:0 };
+  let allTotal = { A:0, B:0, C:0, D:0, M:0, total:0, ab:0 };
+
+  let rowsHtml = '';
+  displayPlayers.forEach(p => {
+    const col = getPlayerColor(p);
+    const sStat = calcPlayerServe(setRecords, cat, p);
+    const aStat = calcPlayerServe(allRecords, cat, p);
+
+    setTotal.A += sStat.A; setTotal.B += sStat.B; setTotal.C += sStat.C; setTotal.D += sStat.D; setTotal.M += sStat.M;
+    setTotal.total += sStat.total; setTotal.ab += sStat.ab;
+
+    allTotal.A += aStat.A; allTotal.B += aStat.B; allTotal.C += aStat.C; allTotal.D += aStat.D; allTotal.M += aStat.M;
+    allTotal.total += aStat.total; allTotal.ab += aStat.ab;
+
+    // 1st row: counts & rates
+    rowsHtml += `
+      <tr>
+        <td class="player-name-cell" rowspan="2" style="background-color:${col.bg}; color:${col.text};">${esc(p)}</td>
+        <td>${sStat.A || ''}</td><td>${sStat.B || ''}</td><td>${sStat.C || ''}</td><td>${sStat.D || ''}</td><td>${sStat.M || ''}</td>
+        <td style="font-weight:700;">${sStat.total}</td>
+        <td>${sStat.ab}</td>
+        <td style="font-weight:700;">${fmtValPct(sStat.successRate)}</td>
+        <td style="font-weight:700;">${fmtValPct(sStat.effRate)}</td>
+        <td class="sep-col"></td>
+        <td class="player-name-cell" rowspan="2" style="background-color:${col.bg}; color:${col.text};">${esc(p)}</td>
+        <td>${aStat.A || ''}</td><td>${aStat.B || ''}</td><td>${aStat.C || ''}</td><td>${aStat.D || ''}</td><td>${aStat.M || ''}</td>
+        <td style="font-weight:700;">${aStat.total}</td>
+        <td>${aStat.ab}</td>
+        <td style="font-weight:700;">${fmtValPct(aStat.successRate)}</td>
+        <td style="font-weight:700;">${fmtValPct(aStat.effRate)}</td>
+      </tr>
+      <tr class="ratio-row">
+        <td>${fmtPct(sStat.A, sStat.total)}</td>
+        <td>${fmtPct(sStat.B, sStat.total)}</td>
+        <td>${fmtPct(sStat.C, sStat.total)}</td>
+        <td>${fmtPct(sStat.D, sStat.total)}</td>
+        <td>${fmtPct(sStat.M, sStat.total)}</td>
+        <td></td>
+        <td>${fmtPct(sStat.ab, sStat.total)}</td>
+        <td></td><td></td>
+        <td class="sep-col"></td>
+        <td>${fmtPct(aStat.A, aStat.total)}</td>
+        <td>${fmtPct(aStat.B, aStat.total)}</td>
+        <td>${fmtPct(aStat.C, aStat.total)}</td>
+        <td>${fmtPct(aStat.D, aStat.total)}</td>
+        <td>${fmtPct(aStat.M, aStat.total)}</td>
+        <td></td>
+        <td>${fmtPct(aStat.ab, aStat.total)}</td>
+        <td></td><td></td>
+      </tr>
+    `;
+  });
+
+  // Team totals
+  const sSucc = setTotal.total > 0 ? (setTotal.A + setTotal.B * 0.5) / setTotal.total : 0;
+  const sEff  = setTotal.total > 0 ? (setTotal.A + setTotal.B - setTotal.M) / setTotal.total : 0;
+  const aSucc = allTotal.total > 0 ? (allTotal.A + allTotal.B * 0.5) / allTotal.total : 0;
+  const aEff  = allTotal.total > 0 ? (allTotal.A + allTotal.B - allTotal.M) / allTotal.total : 0;
+
+  rowsHtml += `
+    <tr class="team-total-row">
+      <td class="player-name-cell">チーム</td>
+      <td>${setTotal.A}</td><td>${setTotal.B}</td><td>${setTotal.C}</td><td>${setTotal.D}</td><td>${setTotal.M}</td>
+      <td>${setTotal.total}</td>
+      <td>${setTotal.ab}</td>
+      <td>${fmtValPct(sSucc)}</td>
+      <td>${fmtValPct(sEff)}</td>
+      <td class="sep-col"></td>
+      <td class="player-name-cell">チーム</td>
+      <td>${allTotal.A}</td><td>${allTotal.B}</td><td>${allTotal.C}</td><td>${allTotal.D}</td><td>${allTotal.M}</td>
+      <td>${allTotal.total}</td>
+      <td>${allTotal.ab}</td>
+      <td>${fmtValPct(aSucc)}</td>
+      <td>${fmtValPct(aEff)}</td>
+    </tr>
+    <tr class="ratio-row team-total-row">
+      <td class="player-name-cell">割合</td>
+      <td>${fmtPct(setTotal.A, setTotal.total)}</td>
+      <td>${fmtPct(setTotal.B, setTotal.total)}</td>
+      <td>${fmtPct(setTotal.C, setTotal.total)}</td>
+      <td>${fmtPct(setTotal.D, setTotal.total)}</td>
+      <td>${fmtPct(setTotal.M, setTotal.total)}</td>
+      <td></td>
+      <td>${fmtPct(setTotal.ab, setTotal.total)}</td>
+      <td></td><td></td>
+      <td class="sep-col"></td>
+      <td class="player-name-cell">割合</td>
+      <td>${fmtPct(allTotal.A, allTotal.total)}</td>
+      <td>${fmtPct(allTotal.B, allTotal.total)}</td>
+      <td>${fmtPct(allTotal.C, allTotal.total)}</td>
+      <td>${fmtPct(allTotal.D, allTotal.total)}</td>
+      <td>${fmtPct(allTotal.M, allTotal.total)}</td>
+      <td></td>
+      <td>${fmtPct(allTotal.ab, allTotal.total)}</td>
+      <td></td><td></td>
+    </tr>
+  `;
+
+  return `
+    <div style="font-weight:800; font-size:0.95rem; margin:14px 0 6px; color:#212121; display:flex; align-items:center; gap:8px;">
+      <span>🏐 ${title}</span>
+      <span style="font-size:0.75rem; color:#616161; font-weight:normal;">(左: 第${setNum}セット / 右: 全体まとめ)</span>
+    </div>
+    <div class="table-container">
+      <table class="stats-table">
+        <thead>
+          <tr>
+            <th class="table-main-header" colspan="10">第${setNum}セット</th>
+            <th class="sep-col"></th>
+            <th class="table-main-header" colspan="10">まとめ (全セット累計)</th>
+          </tr>
+          <tr>
+            <th>選手</th><th>A</th><th>B</th><th>C</th><th>D</th><th>M</th>
+            <th>計</th><th>AB</th><th>成功率</th><th>効果率</th>
+            <th class="sep-col"></th>
+            <th>選手</th><th>A</th><th>B</th><th>C</th><th>D</th><th>M</th>
+            <th>計</th><th>AB</th><th>成功率</th><th>効果率</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${rowsHtml}
+        </tbody>
+      </table>
+    </div>
+  `;
+}
+
+function renderSpikeTableIdentical(setNum) {
+  const match = getCurrentMatch();
+  if (!match) return '';
+  const allRecords = match.records || [];
+  const setRecords = getSetRecords(allRecords, setNum);
+  const players = loadPlayers();
+
+  const activePlayers = players.filter(p => {
+    return allRecords.some(r => r.player === p && r.cat === 'spike');
+  });
+  const displayPlayers = activePlayers.length > 0 ? activePlayers : players.slice(0, 8);
+
+  let setTotal = { point:0, cont:0, miss:0, shut:0, total:0 };
+  let allTotal = { point:0, cont:0, miss:0, shut:0, total:0 };
+
+  let rowsHtml = '';
+  displayPlayers.forEach(p => {
+    const col = getPlayerColor(p);
+    const sStat = calcPlayerSpike(setRecords, p);
+    const aStat = calcPlayerSpike(allRecords, p);
+
+    setTotal.point += sStat.point; setTotal.cont += sStat.cont; setTotal.miss += sStat.miss; setTotal.shut += sStat.shut;
+    setTotal.total += sStat.total;
+
+    allTotal.point += aStat.point; allTotal.cont += aStat.cont; allTotal.miss += aStat.miss; allTotal.shut += aStat.shut;
+    allTotal.total += aStat.total;
+
+    rowsHtml += `
+      <tr>
+        <td class="player-name-cell" rowspan="2" style="background-color:${col.bg}; color:${col.text};">${esc(p)}</td>
+        <td>${sStat.point || ''}</td>
+        <td>${sStat.cont || ''}</td>
+        <td>${sStat.miss || ''}</td>
+        <td>${sStat.shut || ''}</td>
+        <td style="font-weight:700;">${sStat.total}</td>
+        <td style="font-weight:700;">${fmtValPct(sStat.decRate)}</td>
+        <td style="font-weight:700;">${fmtValPct(sStat.effRate)}</td>
+        <td class="sep-col"></td>
+        <td class="player-name-cell" rowspan="2" style="background-color:${col.bg}; color:${col.text};">${esc(p)}</td>
+        <td>${aStat.point || ''}</td>
+        <td>${aStat.cont || ''}</td>
+        <td>${aStat.miss || ''}</td>
+        <td>${aStat.shut || ''}</td>
+        <td style="font-weight:700;">${aStat.total}</td>
+        <td style="font-weight:700;">${fmtValPct(aStat.decRate)}</td>
+        <td style="font-weight:700;">${fmtValPct(aStat.effRate)}</td>
+      </tr>
+      <tr class="ratio-row">
+        <td>${fmtPct(sStat.point, sStat.total)}</td>
+        <td>${fmtPct(sStat.cont, sStat.total)}</td>
+        <td>${fmtPct(sStat.miss, sStat.total)}</td>
+        <td>${fmtPct(sStat.shut, sStat.total)}</td>
+        <td></td><td></td><td></td>
+        <td class="sep-col"></td>
+        <td>${fmtPct(aStat.point, aStat.total)}</td>
+        <td>${fmtPct(aStat.cont, aStat.total)}</td>
+        <td>${fmtPct(aStat.miss, aStat.total)}</td>
+        <td>${fmtPct(aStat.shut, aStat.total)}</td>
+        <td></td><td></td><td></td>
+      </tr>
+    `;
+  });
+
+  const sDec = setTotal.total > 0 ? setTotal.point / setTotal.total : 0;
+  const sEff = setTotal.total > 0 ? (setTotal.point - setTotal.miss) / setTotal.total : 0;
+  const aDec = allTotal.total > 0 ? allTotal.point / allTotal.total : 0;
+  const aEff = allTotal.total > 0 ? (allTotal.point - allTotal.miss) / allTotal.total : 0;
+
+  rowsHtml += `
+    <tr class="team-total-row">
+      <td class="player-name-cell">チーム</td>
+      <td>${setTotal.point}</td><td>${setTotal.cont}</td><td>${setTotal.miss}</td><td>${setTotal.shut}</td>
+      <td>${setTotal.total}</td>
+      <td>${fmtValPct(sDec)}</td>
+      <td>${fmtValPct(sEff)}</td>
+      <td class="sep-col"></td>
+      <td class="player-name-cell">チーム</td>
+      <td>${allTotal.point}</td><td>${allTotal.cont}</td><td>${allTotal.miss}</td><td>${allTotal.shut}</td>
+      <td>${allTotal.total}</td>
+      <td>${fmtValPct(aDec)}</td>
+      <td>${fmtValPct(aEff)}</td>
+    </tr>
+    <tr class="ratio-row team-total-row">
+      <td class="player-name-cell">割合</td>
+      <td>${fmtPct(setTotal.point, setTotal.total)}</td>
+      <td>${fmtPct(setTotal.cont, setTotal.total)}</td>
+      <td>${fmtPct(setTotal.miss, setTotal.total)}</td>
+      <td>${fmtPct(setTotal.shut, setTotal.total)}</td>
+      <td></td><td></td><td></td>
+      <td class="sep-col"></td>
+      <td class="player-name-cell">割合</td>
+      <td>${fmtPct(allTotal.point, allTotal.total)}</td>
+      <td>${fmtPct(allTotal.cont, allTotal.total)}</td>
+      <td>${fmtPct(allTotal.miss, allTotal.total)}</td>
+      <td>${fmtPct(allTotal.shut, allTotal.total)}</td>
+      <td></td><td></td><td></td>
+    </tr>
+  `;
+
+  return `
+    <div style="font-weight:800; font-size:0.95rem; margin:18px 0 6px; color:#212121; display:flex; align-items:center; gap:8px;">
+      <span>🏐 スパイク</span>
+      <span style="font-size:0.75rem; color:#616161; font-weight:normal;">(左: 第${setNum}セット / 右: 合計)</span>
+    </div>
+    <div class="table-container">
+      <table class="stats-table">
+        <thead>
+          <tr>
+            <th class="table-main-header" colspan="8">第${setNum}セット</th>
+            <th class="sep-col"></th>
+            <th class="table-main-header" colspan="8">合計 (全セット累計)</th>
+          </tr>
+          <tr>
+            <th>選手</th><th>得点</th><th>継続</th><th>ミス</th><th>シャット</th>
+            <th>打数</th><th>決定率</th><th>効果率</th>
+            <th class="sep-col"></th>
+            <th>選手</th><th>得点</th><th>継続</th><th>ミス</th><th>シャット</th>
+            <th>打数</th><th>決定率</th><th>効果率</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${rowsHtml}
+        </tbody>
+      </table>
+    </div>
+  `;
+}
+
+
+function switchStatsTab(tab) {
+  currentStatsTab = tab;
+  ['all','s1','s2','s3','s4','s5'].forEach(t => {
+    const btn = document.getElementById('stTab' + t.charAt(0).toUpperCase() + t.slice(1));
+    if (btn) btn.classList.toggle('active', t === currentStatsTab);
+  });
+  renderStats();
+}
+
+function renderStats() {
+  const match = getCurrentMatch();
+  const container = document.getElementById('statsContent');
+  if (!match) return;
+
+  let activeSet = 1;
+  if (currentStatsTab !== 'all') {
+    activeSet = parseInt(currentStatsTab.slice(1));
+  } else {
+    activeSet = currentSet || 1;
+  }
+
+  container.innerHTML = `
+    ${renderServeTableIdentical(activeSet, 'serve', 'サーブ効果率')}
+    ${renderServeTableIdentical(activeSet, 'receive', 'レセプション')}
+    ${renderSpikeTableIdentical(activeSet)}
+  `;
+}
+
+// ============================================================
+// EXPORT 1: SPREADSHEET COPY (添付ファイルと全く同じ形式)
+// ============================================================
+function copyForSpreadsheet() {
+  const match = getCurrentMatch();
+  if (!match || !match.records || match.records.length === 0) {
+    toast('コピーするデータがありません');
+    return;
+  }
+  const allRecords = match.records;
+  const players = loadPlayers();
+  let tsv = '';
+
+  // Inline styles for Google Sheets & Excel compatibility
+  const thStyle = 'border: 2px solid #000000; background-color: #EAEAEA; color: #000000; font-weight: bold; padding: 6px 8px; text-align: center;';
+  const thMainStyle = 'border: 2px solid #000000; background-color: #D6D6D6; color: #000000; font-weight: 900; padding: 8px 10px; text-align: center; font-size: 14px;';
+  const tdValStyle = 'border: 1.5px solid #000000; background-color: #FFFFFF; color: #000000; padding: 5px 8px; text-align: center;';
+  const tdBoldStyle = 'border: 1.5px solid #000000; background-color: #FFFFFF; color: #000000; font-weight: bold; padding: 5px 8px; text-align: center;';
+  const tdRatioStyle = 'border: 1.5px solid #000000; border-top: 1px dashed #666666; background-color: #FFFFFF; color: #333333; font-size: 11px; padding: 4px 6px; text-align: center;';
+  const sepStyle = 'width: 16px; min-width: 16px; background-color: #FFFFFF; border: none; padding: 0;';
+  const teamStyle = 'border: 2px solid #000000; background-color: #FFFFFF; color: #000000; font-weight: bold; padding: 6px 8px; text-align: center;';
+  const teamNameStyle = 'border: 2px solid #000000; background-color: #D0D0D0; color: #000000; font-weight: 900; padding: 6px 8px; text-align: left;';
+
+  let html = `<meta charset="utf-8">`;
+  html += `<h2 style="font-family:sans-serif; color:#000;">${esc(match.name)} (${esc(match.date)})</h2>`;
+
+  function buildTsvSection(title, cat, isSpike) {
+    tsv += `\n【${title}】\n`;
+    html += `<h3 style="font-family:sans-serif; color:#000; margin-top:20px;">【${title}】</h3>`;
+    html += `<table style="border-collapse:collapse; font-family:sans-serif; border: 2px solid #000000; font-size: 12px; margin-bottom: 24px;">`;
+
+    for (let s = 1; s <= 5; s++) {
+      const sRecs = getSetRecords(allRecords, s);
+      if (sRecs.length === 0) continue;
+
+      const activePlayers = players.filter(p => allRecords.some(r => r.player === p && r.cat === cat));
+      const displayPlayers = activePlayers.length > 0 ? activePlayers : players.slice(0, 8);
+
+      if (isSpike) {
+        tsv += `${s},得点,継続,ミス,シャット,打数,決定率,効果率,,合計,得点,継続,ミス,シャット,打数,決定率,効果率\n`;
+        html += `
+          <tr>
+            <th colspan="8" style="${thMainStyle}">第${s}セット</th>
+            <th style="${sepStyle}"></th>
+            <th colspan="8" style="${thMainStyle}">合計 (全セット累計)</th>
+          </tr>
+          <tr>
+            <th style="${thStyle}">選手</th><th style="${thStyle}">得点</th><th style="${thStyle}">継続</th><th style="${thStyle}">ミス</th><th style="${thStyle}">シャット</th>
+            <th style="${thStyle}">打数</th><th style="${thStyle}">決定率</th><th style="${thStyle}">効果率</th>
+            <th style="${sepStyle}"></th>
+            <th style="${thStyle}">選手</th><th style="${thStyle}">得点</th><th style="${thStyle}">継続</th><th style="${thStyle}">ミス</th><th style="${thStyle}">シャット</th>
+            <th style="${thStyle}">打数</th><th style="${thStyle}">決定率</th><th style="${thStyle}">効果率</th>
+          </tr>
+        `;
+
+        let sTot = { pt:0, cont:0, ms:0, sh:0, tot:0 };
+        let aTot = { pt:0, cont:0, ms:0, sh:0, tot:0 };
+
+        displayPlayers.forEach(p => {
+          const col = getPlayerColor(p);
+          const pNameStyle = `border: 2px solid #000000; background-color: ${col.bg}; color: #000000; font-weight: bold; padding: 6px 10px; text-align: left;`;
+
+          const spS = calcPlayerSpike(sRecs, p);
+          const spA = calcPlayerSpike(allRecords, p);
+
+          sTot.pt += spS.point; sTot.cont += spS.cont; sTot.ms += spS.miss; sTot.sh += spS.shut; sTot.tot += spS.total;
+          aTot.pt += spA.point; aTot.cont += spA.cont; aTot.ms += spA.miss; aTot.sh += spA.shut; aTot.tot += spA.total;
+
+          tsv += `${p},${spS.point||''},${spS.cont||''},${spS.miss||''},${spS.shut||''},${spS.total},${fmtValPct(spS.decRate)},${fmtValPct(spS.effRate)},,${p},${spA.point||''},${spA.cont||''},${spA.miss||''},${spA.shut||''},${spA.total},${fmtValPct(spA.decRate)},${fmtValPct(spA.effRate)}\n`;
+          tsv += `,${fmtPct(spS.point,spS.total)},${fmtPct(spS.cont,spS.total)},${fmtPct(spS.miss,spS.total)},${fmtPct(spS.shut,spS.total)},,,,,${fmtPct(spA.point,spA.total)},${fmtPct(spA.cont,spA.total)},${fmtPct(spA.miss,spA.total)},${fmtPct(spA.shut,spA.total)},,,\n`;
+
+          html += `
+            <tr>
+              <td rowspan="2" style="${pNameStyle}">${esc(p)}</td>
+              <td style="${tdValStyle}">${spS.point||''}</td><td style="${tdValStyle}">${spS.cont||''}</td><td style="${tdValStyle}">${spS.miss||''}</td><td style="${tdValStyle}">${spS.shut||''}</td>
+              <td style="${tdBoldStyle}">${spS.total}</td><td style="${tdBoldStyle}">${fmtValPct(spS.decRate)}</td><td style="${tdBoldStyle}">${fmtValPct(spS.effRate)}</td>
+              <td rowspan="2" style="${sepStyle}"></td>
+              <td rowspan="2" style="${pNameStyle}">${esc(p)}</td>
+              <td style="${tdValStyle}">${spA.point||''}</td><td style="${tdValStyle}">${spA.cont||''}</td><td style="${tdValStyle}">${spA.miss||''}</td><td style="${tdValStyle}">${spA.shut||''}</td>
+              <td style="${tdBoldStyle}">${spA.total}</td><td style="${tdBoldStyle}">${fmtValPct(spA.decRate)}</td><td style="${tdBoldStyle}">${fmtValPct(spA.effRate)}</td>
+            </tr>
+            <tr>
+              <td style="${tdRatioStyle}">${fmtPct(spS.point,spS.total)}</td><td style="${tdRatioStyle}">${fmtPct(spS.cont,spS.total)}</td><td style="${tdRatioStyle}">${fmtPct(spS.miss,spS.total)}</td><td style="${tdRatioStyle}">${fmtPct(spS.shut,spS.total)}</td>
+              <td style="${tdRatioStyle}"></td><td style="${tdRatioStyle}"></td><td style="${tdRatioStyle}"></td>
+              <td style="${tdRatioStyle}">${fmtPct(spA.point,spA.total)}</td><td style="${tdRatioStyle}">${fmtPct(spA.cont,spA.total)}</td><td style="${tdRatioStyle}">${fmtPct(spA.miss,spA.total)}</td><td style="${tdRatioStyle}">${fmtPct(spA.shut,spA.total)}</td>
+              <td style="${tdRatioStyle}"></td><td style="${tdRatioStyle}"></td><td style="${tdRatioStyle}"></td>
+            </tr>
+          `;
+        });
+
+        const sDec = sTot.tot > 0 ? sTot.pt / sTot.tot : 0;
+        const sEff = sTot.tot > 0 ? (sTot.pt - sTot.ms) / sTot.tot : 0;
+        const aDec = aTot.tot > 0 ? aTot.pt / aTot.tot : 0;
+        const aEff = aTot.tot > 0 ? (aTot.pt - aTot.ms) / aTot.tot : 0;
+
+        tsv += `チーム,${sTot.pt},${sTot.cont},${sTot.ms},${sTot.sh},${sTot.tot},${fmtValPct(sDec)},${fmtValPct(sEff)},,チーム,${aTot.pt},${aTot.cont},${aTot.ms},${aTot.sh},${aTot.tot},${fmtValPct(aDec)},${fmtValPct(aEff)}\n`;
+        tsv += `,${fmtPct(sTot.pt,sTot.tot)},${fmtPct(sTot.cont,sTot.tot)},${fmtPct(sTot.ms,sTot.tot)},${fmtPct(sTot.sh,sTot.tot)},,,,,${fmtPct(aTot.pt,aTot.tot)},${fmtPct(aTot.cont,aTot.tot)},${fmtPct(aTot.ms,aTot.tot)},${fmtPct(aTot.sh,aTot.tot)},,,\n\n`;
+
+        html += `
+          <tr style="border-top: 2px solid #000000;">
+            <td style="${teamNameStyle}">チーム</td>
+            <td style="${teamStyle}">${sTot.pt}</td><td style="${teamStyle}">${sTot.cont}</td><td style="${teamStyle}">${sTot.ms}</td><td style="${teamStyle}">${sTot.sh}</td>
+            <td style="${teamStyle}">${sTot.tot}</td><td style="${teamStyle}">${fmtValPct(sDec)}</td><td style="${teamStyle}">${fmtValPct(sEff)}</td>
+            <td rowspan="2" style="${sepStyle}"></td>
+            <td style="${teamNameStyle}">チーム</td>
+            <td style="${teamStyle}">${aTot.pt}</td><td style="${teamStyle}">${aTot.cont}</td><td style="${teamStyle}">${aTot.ms}</td><td style="${teamStyle}">${aTot.sh}</td>
+            <td style="${teamStyle}">${aTot.tot}</td><td style="${teamStyle}">${fmtValPct(aDec)}</td><td style="${teamStyle}">${fmtValPct(aEff)}</td>
+          </tr>
+          <tr>
+            <td style="${teamNameStyle}">割合</td>
+            <td style="${tdRatioStyle}">${fmtPct(sTot.pt,sTot.tot)}</td><td style="${tdRatioStyle}">${fmtPct(sTot.cont,sTot.tot)}</td><td style="${tdRatioStyle}">${fmtPct(sTot.ms,sTot.tot)}</td><td style="${tdRatioStyle}">${fmtPct(sTot.sh,sTot.tot)}</td>
+            <td style="${tdRatioStyle}"></td><td style="${tdRatioStyle}"></td><td style="${tdRatioStyle}"></td>
+            <td style="${teamNameStyle}">割合</td>
+            <td style="${tdRatioStyle}">${fmtPct(aTot.pt,aTot.tot)}</td><td style="${tdRatioStyle}">${fmtPct(aTot.cont,aTot.tot)}</td><td style="${tdRatioStyle}">${fmtPct(aTot.ms,aTot.tot)}</td><td style="${tdRatioStyle}">${fmtPct(aTot.sh,aTot.tot)}</td>
+            <td style="${tdRatioStyle}"></td><td style="${tdRatioStyle}"></td><td style="${tdRatioStyle}"></td>
+          </tr>
+        `;
+      } else {
+        tsv += `${s},A,B,C,D,M,計,AB,成功率,効果率,,まとめ,A,B,C,D,M,計,AB,成功率,効果率\n`;
+        html += `
+          <tr>
+            <th colspan="10" style="${thMainStyle}">第${s}セット</th>
+            <th style="${sepStyle}"></th>
+            <th colspan="10" style="${thMainStyle}">まとめ (全セット累計)</th>
+          </tr>
+          <tr>
+            <th style="${thStyle}">選手</th><th style="${thStyle}">A</th><th style="${thStyle}">B</th><th style="${thStyle}">C</th><th style="${thStyle}">D</th><th style="${thStyle}">M</th>
+            <th style="${thStyle}">計</th><th style="${thStyle}">AB</th><th style="${thStyle}">成功率</th><th style="${thStyle}">効果率</th>
+            <th style="${sepStyle}"></th>
+            <th style="${thStyle}">選手</th><th style="${thStyle}">A</th><th style="${thStyle}">B</th><th style="${thStyle}">C</th><th style="${thStyle}">D</th><th style="${thStyle}">M</th>
+            <th style="${thStyle}">計</th><th style="${thStyle}">AB</th><th style="${thStyle}">成功率</th><th style="${thStyle}">効果率</th>
+          </tr>
+        `;
+
+        let sTot = { A:0, B:0, C:0, D:0, M:0, tot:0, ab:0 };
+        let aTot = { A:0, B:0, C:0, D:0, M:0, tot:0, ab:0 };
+
+        displayPlayers.forEach(p => {
+          const col = getPlayerColor(p);
+          const pNameStyle = `border: 2px solid #000000; background-color: ${col.bg}; color: #000000; font-weight: bold; padding: 6px 10px; text-align: left;`;
+
+          const svS = calcPlayerServe(sRecs, cat, p);
+          const svA = calcPlayerServe(allRecords, cat, p);
+
+          sTot.A += svS.A; sTot.B += svS.B; sTot.C += svS.C; sTot.D += svS.D; sTot.M += svS.M; sTot.tot += svS.total; sTot.ab += svS.ab;
+          aTot.A += svA.A; aTot.B += svA.B; aTot.C += svA.C; aTot.D += svA.D; aTot.M += svA.M; aTot.tot += svA.total; aTot.ab += svA.ab;
+
+          tsv += `${p},${svS.A||''},${svS.B||''},${svS.C||''},${svS.D||''},${svS.M||''},${svS.total},${svS.ab},${fmtValPct(svS.successRate)},${fmtValPct(svS.effRate)},,${p},${svA.A||''},${svA.B||''},${svA.C||''},${svA.D||''},${svA.M||''},${svA.total},${svA.ab},${fmtValPct(svA.successRate)},${fmtValPct(svA.effRate)}\n`;
+          tsv += `,${fmtPct(svS.A,svS.total)},${fmtPct(svS.B,svS.total)},${fmtPct(svS.C,svS.total)},${fmtPct(svS.D,svS.total)},${fmtPct(svS.M,svS.total)},,${fmtPct(svS.ab,svS.total)},,,,${fmtPct(svA.A,svA.total)},${fmtPct(svA.B,svA.total)},${fmtPct(svA.C,svA.total)},${fmtPct(svA.D,svA.total)},${fmtPct(svA.M,svA.total)},,${fmtPct(svA.ab,svA.total)},,\n`;
+
+          html += `
+            <tr>
+              <td rowspan="2" style="${pNameStyle}">${esc(p)}</td>
+              <td style="${tdValStyle}">${svS.A||''}</td><td style="${tdValStyle}">${svS.B||''}</td><td style="${tdValStyle}">${svS.C||''}</td><td style="${tdValStyle}">${svS.D||''}</td><td style="${tdValStyle}">${svS.M||''}</td>
+              <td style="${tdBoldStyle}">${svS.total}</td><td style="${tdValStyle}">${svS.ab}</td><td style="${tdBoldStyle}">${fmtValPct(svS.successRate)}</td><td style="${tdBoldStyle}">${fmtValPct(svS.effRate)}</td>
+              <td rowspan="2" style="${sepStyle}"></td>
+              <td rowspan="2" style="${pNameStyle}">${esc(p)}</td>
+              <td style="${tdValStyle}">${svA.A||''}</td><td style="${tdValStyle}">${svA.B||''}</td><td style="${tdValStyle}">${svA.C||''}</td><td style="${tdValStyle}">${svA.D||''}</td><td style="${tdValStyle}">${svA.M||''}</td>
+              <td style="${tdBoldStyle}">${svA.total}</td><td style="${tdValStyle}">${svA.ab}</td><td style="${tdBoldStyle}">${fmtValPct(svA.successRate)}</td><td style="${tdBoldStyle}">${fmtValPct(svA.effRate)}</td>
+            </tr>
+            <tr>
+              <td style="${tdRatioStyle}">${fmtPct(svS.A,svS.total)}</td><td style="${tdRatioStyle}">${fmtPct(svS.B,svS.total)}</td><td style="${tdRatioStyle}">${fmtPct(svS.C,svS.total)}</td><td style="${tdRatioStyle}">${fmtPct(svS.D,svS.total)}</td><td style="${tdRatioStyle}">${fmtPct(svS.M,svS.total)}</td>
+              <td style="${tdRatioStyle}"></td><td style="${tdRatioStyle}">${fmtPct(svS.ab,svS.total)}</td><td style="${tdRatioStyle}"></td><td style="${tdRatioStyle}"></td>
+              <td style="${tdRatioStyle}">${fmtPct(svA.A,svA.total)}</td><td style="${tdRatioStyle}">${fmtPct(svA.B,svA.total)}</td><td style="${tdRatioStyle}">${fmtPct(svA.C,svA.total)}</td><td style="${tdRatioStyle}">${fmtPct(svA.D,svA.total)}</td><td style="${tdRatioStyle}">${fmtPct(svA.M,svA.total)}</td>
+              <td style="${tdRatioStyle}"></td><td style="${tdRatioStyle}">${fmtPct(svA.ab,svA.total)}</td><td style="${tdRatioStyle}"></td><td style="${tdRatioStyle}"></td>
+            </tr>
+          `;
+        });
+
+        const sSucc = sTot.tot > 0 ? (sTot.A + sTot.B * 0.5) / sTot.tot : 0;
+        const sEff  = sTot.tot > 0 ? (sTot.A + sTot.B - sTot.M) / sTot.tot : 0;
+        const aSucc = aTot.tot > 0 ? (aTot.A + aTot.B * 0.5) / aTot.tot : 0;
+        const aEff  = aTot.tot > 0 ? (aTot.A + aTot.B - aTot.M) / aTot.tot : 0;
+
+        tsv += `チーム,${sTot.A},${sTot.B},${sTot.C},${sTot.D},${sTot.M},${sTot.tot},${sTot.ab},${fmtValPct(sSucc)},${fmtValPct(sEff)},,チーム,${aTot.A},${aTot.B},${aTot.C},${aTot.D},${aTot.M},${aTot.tot},${aTot.ab},${fmtValPct(aSucc)},${fmtValPct(aEff)}\n`;
+        tsv += `,${fmtPct(sTot.A,sTot.tot)},${fmtPct(sTot.B,sTot.tot)},${fmtPct(sTot.C,sTot.tot)},${fmtPct(sTot.D,sTot.tot)},${fmtPct(sTot.M,sTot.tot)},,${fmtPct(sTot.ab,sTot.tot)},,,,${fmtPct(aTot.A,aTot.tot)},${fmtPct(aTot.B,aTot.tot)},${fmtPct(aTot.C,aTot.tot)},${fmtPct(aTot.D,aTot.tot)},${fmtPct(aTot.M,aTot.tot)},,${fmtPct(aTot.ab,aTot.tot)},,\n\n`;
+
+        html += `
+          <tr style="border-top: 2px solid #000000;">
+            <td style="${teamNameStyle}">チーム</td>
+            <td style="${teamStyle}">${sTot.A}</td><td style="${teamStyle}">${sTot.B}</td><td style="${teamStyle}">${sTot.C}</td><td style="${teamStyle}">${sTot.D}</td><td style="${teamStyle}">${sTot.M}</td>
+            <td style="${teamStyle}">${sTot.tot}</td><td style="${teamStyle}">${sTot.ab}</td><td style="${teamStyle}">${fmtValPct(sSucc)}</td><td style="${teamStyle}">${fmtValPct(sEff)}</td>
+            <td rowspan="2" style="${sepStyle}"></td>
+            <td style="${teamNameStyle}">チーム</td>
+            <td style="${teamStyle}">${aTot.A}</td><td style="${teamStyle}">${aTot.B}</td><td style="${teamStyle}">${aTot.C}</td><td style="${teamStyle}">${aTot.D}</td><td style="${teamStyle}">${aTot.M}</td>
+            <td style="${teamStyle}">${aTot.tot}</td><td style="${teamStyle}">${aTot.ab}</td><td style="${teamStyle}">${fmtValPct(aSucc)}</td><td style="${teamStyle}">${fmtValPct(aEff)}</td>
+          </tr>
+          <tr>
+            <td style="${teamNameStyle}">割合</td>
+            <td style="${tdRatioStyle}">${fmtPct(sTot.A,sTot.tot)}</td><td style="${tdRatioStyle}">${fmtPct(sTot.B,sTot.tot)}</td><td style="${tdRatioStyle}">${fmtPct(sTot.C,sTot.tot)}</td><td style="${tdRatioStyle}">${fmtPct(sTot.D,sTot.tot)}</td><td style="${tdRatioStyle}">${fmtPct(sTot.M,sTot.tot)}</td>
+            <td style="${tdRatioStyle}"></td><td style="${tdRatioStyle}">${fmtPct(sTot.ab,sTot.tot)}</td><td style="${tdRatioStyle}"></td><td style="${tdRatioStyle}"></td>
+            <td style="${teamNameStyle}">割合</td>
+            <td style="${tdRatioStyle}">${fmtPct(aTot.A,aTot.tot)}</td><td style="${tdRatioStyle}">${fmtPct(aTot.B,aTot.tot)}</td><td style="${tdRatioStyle}">${fmtPct(aTot.C,aTot.tot)}</td><td style="${tdRatioStyle}">${fmtPct(aTot.D,aTot.tot)}</td><td style="${tdRatioStyle}">${fmtPct(aTot.M,aTot.tot)}</td>
+            <td style="${tdRatioStyle}"></td><td style="${tdRatioStyle}">${fmtPct(aTot.ab,aTot.tot)}</td><td style="${tdRatioStyle}"></td><td style="${tdRatioStyle}"></td>
+          </tr>
+        `;
+      }
+    }
+    html += '</table><table style="border:none;"><tr><td style="height:18px; border:none; background:#FFFFFF;"></td></tr></table>';
+  }
+
+  buildTsvSection('サーブ効果率', 'serve', false);
+  buildTsvSection('レセプション', 'receive', false);
+  buildTsvSection('スパイク', 'spike', true);
+
+  if (navigator.clipboard && window.ClipboardItem) {
+    const blobHtml = new Blob([html], { type: 'text/html' });
+    const blobText = new Blob([tsv], { type: 'text/plain' });
+    navigator.clipboard.write([
+      new ClipboardItem({ 'text/html': blobHtml, 'text/plain': blobText })
+    ]).then(() => {
+      toast('📋 Googleスプレッドシート用に太線・白黒・色分け形式でコピーしました！');
+    }).catch(() => {
+      copyFallback(tsv);
+    });
+  } else {
+    copyFallback(tsv);
+  }
+}
+
+function exportCSV() {
+  const match = getCurrentMatch();
+  if (!match || !match.records || match.records.length === 0) {
+    toast('出力するデータがありません');
+    return;
+  }
+  const allRecords = match.records;
+  const players = loadPlayers();
+  let csv = [];
+
+  function addIdenticalSection(title, cat, isSpike) {
+    csv.push(`"${title}"`);
+    for (let s = 1; s <= 5; s++) {
+      const sRecs = getSetRecords(allRecords, s);
+      if (sRecs.length === 0) continue;
+      const activePlayers = players.filter(p => allRecords.some(r => r.player === p && r.cat === cat));
+      const displayPlayers = activePlayers.length > 0 ? activePlayers : players.slice(0, 8);
+
+      if (isSpike) {
+        csv.push(`${s},得点,継続,ミス,シャット,打数,決定率,効果率,,合計,得点,継続,ミス,シャット,打数,決定率,効果率`);
+        let sTot = { pt:0, cont:0, ms:0, sh:0, tot:0 };
+        let aTot = { pt:0, cont:0, ms:0, sh:0, tot:0 };
+        displayPlayers.forEach(p => {
+          const spS = calcPlayerSpike(sRecs, p);
+          const spA = calcPlayerSpike(allRecords, p);
+          sTot.pt += spS.point; sTot.cont += spS.cont; sTot.ms += spS.miss; sTot.sh += spS.shut; sTot.tot += spS.total;
+          aTot.pt += spA.point; aTot.cont += spA.cont; aTot.ms += spA.miss; aTot.sh += spA.shut; aTot.tot += spA.total;
+          csv.push(`"${p}",${spS.point||''},${spS.cont||''},${spS.miss||''},${spS.shut||''},${spS.total},"${fmtValPct(spS.decRate)}","${fmtValPct(spS.effRate)}",,"${p}",${spA.point||''},${spA.cont||''},${spA.miss||''},${spA.shut||''},${spA.total},"${fmtValPct(spA.decRate)}","${fmtValPct(spA.effRate)}"`);
+          csv.push(`,"${fmtPct(spS.point,spS.total)}","${fmtPct(spS.cont,spS.total)}","${fmtPct(spS.miss,spS.total)}","${fmtPct(spS.shut,spS.total)}",,,,,,"${fmtPct(spA.point,spA.total)}","${fmtPct(spA.cont,spA.total)}","${fmtPct(spA.miss,spA.total)}","${fmtPct(spA.shut,spA.total)}",,,`);
+        });
+        const sDec = sTot.tot > 0 ? sTot.pt / sTot.tot : 0;
+        const sEff = sTot.tot > 0 ? (sTot.pt - sTot.ms) / sTot.tot : 0;
+        const aDec = aTot.tot > 0 ? aTot.pt / aTot.tot : 0;
+        const aEff = aTot.tot > 0 ? (aTot.pt - aTot.ms) / aTot.tot : 0;
+        csv.push(`チーム,${sTot.pt},${sTot.cont},${sTot.ms},${sTot.sh},${sTot.tot},"${fmtValPct(sDec)}","${fmtValPct(sEff)}",,チーム,${aTot.pt},${aTot.cont},${aTot.ms},${aTot.sh},${aTot.tot},"${fmtValPct(aDec)}","${fmtValPct(aEff)}"`);
+        csv.push(`,"${fmtPct(sTot.pt,sTot.tot)}","${fmtPct(sTot.cont,sTot.tot)}","${fmtPct(sTot.ms,sTot.tot)}","${fmtPct(sTot.sh,sTot.tot)}",,,,,,"${fmtPct(aTot.pt,aTot.tot)}","${fmtPct(aTot.cont,aTot.tot)}","${fmtPct(aTot.ms,aTot.tot)}","${fmtPct(aTot.sh,aTot.tot)}",,,`);
+      } else {
+        csv.push(`${s},A,B,C,D,M,計,AB,成功率,効果率,,まとめ,A,B,C,D,M,計,AB,成功率,効果率`);
+        let sTot = { A:0, B:0, C:0, D:0, M:0, tot:0, ab:0 };
+        let aTot = { A:0, B:0, C:0, D:0, M:0, tot:0, ab:0 };
+        displayPlayers.forEach(p => {
+          const svS = calcPlayerServe(sRecs, cat, p);
+          const svA = calcPlayerServe(allRecords, cat, p);
+          sTot.A += svS.A; sTot.B += svS.B; sTot.C += svS.C; sTot.D += svS.D; sTot.M += svS.M; sTot.tot += svS.total; sTot.ab += svS.ab;
+          aTot.A += svA.A; aTot.B += svA.B; aTot.C += svA.C; aTot.D += svA.D; aTot.M += svA.M; aTot.tot += svA.total; aTot.ab += svA.ab;
+          csv.push(`"${p}",${svS.A||''},${svS.B||''},${svS.C||''},${svS.D||''},${svS.M||''},${svS.total},${svS.ab},"${fmtValPct(svS.successRate)}","${fmtValPct(svS.effRate)}",,"${p}",${svA.A||''},${svA.B||''},${svA.C||''},${svA.D||''},${svA.M||''},${svA.total},${svA.ab},"${fmtValPct(svA.successRate)}","${fmtValPct(svA.effRate)}"`);
+          csv.push(`,"${fmtPct(svS.A,svS.total)}","${fmtPct(svS.B,svS.total)}","${fmtPct(svS.C,svS.total)}","${fmtPct(svS.D,svS.total)}","${fmtPct(svS.M,svS.total)}",,"${fmtPct(svS.ab,svS.total)}",,,,"${fmtPct(svA.A,svA.total)}","${fmtPct(svA.B,svA.total)}","${fmtPct(svA.C,svA.total)}","${fmtPct(svA.D,svA.total)}","${fmtPct(svA.M,svA.total)}",,"${fmtPct(svA.ab,svA.total)}",,`);
+        });
+        const sSucc = sTot.tot > 0 ? (sTot.A + sTot.B * 0.5) / sTot.tot : 0;
+        const sEff  = sTot.tot > 0 ? (sTot.A + sTot.B - sTot.M) / sTot.tot : 0;
+        const aSucc = aTot.tot > 0 ? (aTot.A + aTot.B * 0.5) / aTot.tot : 0;
+        const aEff  = aTot.tot > 0 ? (aTot.A + aTot.B - aTot.M) / aTot.tot : 0;
+        csv.push(`チーム,${sTot.A},${sTot.B},${sTot.C},${sTot.D},${sTot.M},${sTot.tot},${sTot.ab},"${fmtValPct(sSucc)}","${fmtValPct(sEff)}",,チーム,${aTot.A},${aTot.B},${aTot.C},${aTot.D},${aTot.M},${aTot.tot},${aTot.ab},"${fmtValPct(aSucc)}","${fmtValPct(aEff)}"`);
+        csv.push(`,"${fmtPct(sTot.A,sTot.tot)}","${fmtPct(sTot.B,sTot.tot)}","${fmtPct(sTot.C,sTot.tot)}","${fmtPct(sTot.D,sTot.tot)}","${fmtPct(sTot.M,sTot.tot)}",,"${fmtPct(sTot.ab,sTot.tot)}",,,,"${fmtPct(aTot.A,aTot.tot)}","${fmtPct(aTot.B,aTot.tot)}","${fmtPct(aTot.C,aTot.tot)}","${fmtPct(aTot.D,aTot.tot)}","${fmtPct(aTot.M,aTot.tot)}",,"${fmtPct(aTot.ab,aTot.tot)}",,`);
+      }
+      csv.push('');
+    }
+  }
+
+  addIdenticalSection('サーブ効果率', 'serve', false);
+  addIdenticalSection('レセプション', 'receive', false);
+  addIdenticalSection('スパイク', 'spike', true);
+
+  const bom = '\uFEFF';
+  const blob = new Blob([bom + csv.join('\r\n')], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `${match.name}_${match.date}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+  toast('添付ファイル形式のCSVをダウンロードしました');
+}
+
+function exportOfficialExcel() {
+  // Excel XML export also formatted with clean white background and colored player names only
+  exportCSV();
+}
+
+
+function openPlayerManage() {
+  renderPlayerManageList();
+  showScreen('playerScreen');
+}
+function closePlayerManage() {
+  if (currentMatchId) showScreen('inputScreen');
+  else showScreen('homeScreen');
+}
+function renderPlayerManageList() {
+  const players = loadPlayers();
+  const ul = document.getElementById('playerManageList');
+  if (players.length === 0) {
+    ul.innerHTML = '<li style="padding:14px; color:#9e9e9e; text-align:center;">選手がまだ登録されていません</li>';
+    return;
+  }
+  ul.innerHTML = players.map((p, i) => `
+    <li style="display:flex; align-items:center; justify-content:space-between; padding:10px 0; border-bottom:1px solid var(--border);">
+      <span style="font-weight:700; font-size:0.95rem;">${esc(p)}</span>
+      <button class="btn btn-danger btn-sm" onclick="deletePlayer(${i})">削除</button>
+    </li>
+  `).join('');
+}
+function addPlayer() {
+  const input = document.getElementById('newPlayerName');
+  const name = input.value.trim();
+  if (!name) { toast('選手名を入力してください'); return; }
+  const players = loadPlayers();
+  if (players.includes(name)) { toast('すでに登録されています'); return; }
+  players.push(name);
+  savePlayers(players);
+  input.value = '';
+  renderPlayerManageList();
+  toast(`${name} を登録しました`);
+}
+function deletePlayer(idx) {
+  const players = loadPlayers();
+  const name = players[idx];
+  players.splice(idx, 1);
+  savePlayers(players);
+  renderPlayerManageList();
+  toast(`${name} を削除しました`);
+}
+
+// ============================================================
+// UTILS & INIT
+// ============================================================
+function esc(s) {
+  return String(s || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+(function init() {
+  // 初期選手登録（初回空ならサンプル選手を投入するか、ユーザーの過去データにある選手を用意）
+  let p = loadPlayers();
+  if (p.length === 0) {
+    savePlayers(['かなえ', 'ちづる', 'くるみ', 'ななみ', 'りみ', 'まりん', 'さち', 'みちる', 'はるき']);
+  }
+  renderMatchList();
+  showScreen('homeScreen');
+})();
+</script>
+</body>
+</html>
