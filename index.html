@@ -736,10 +736,22 @@
   </div>
   <div class="content scroll-content">
     <div style="display:flex;gap:8px;margin-bottom:14px;">
-      <input type="text" class="form-control" id="newPlayerName" placeholder="新しい選手名 (例: かなえ)" style="flex:1;">
+      <input type="text" class="form-control" id="newPlayerName"
+             placeholder="新しい選手名を入力"
+             autocomplete="off"
+             autocorrect="off"
+             autocapitalize="off"
+             spellcheck="false"
+             name="vb_player_noname"
+             data-lpignore="true"
+             onkeydown="if(event.key==='Enter') addPlayer()"
+             style="flex:1;">
       <button class="btn btn-primary btn-md" onclick="addPlayer()">追加</button>
     </div>
-    <div style="font-size:0.82rem; font-weight:700; color:var(--text2); margin-bottom:8px;">登録選手一覧</div>
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+      <span style="font-size:0.82rem; font-weight:700; color:var(--text2);">登録選手一覧</span>
+      <button class="btn btn-outline btn-sm" onclick="clearAllPlayers()" style="font-size:0.75rem; color:#C62828; border-color:#EF9A9A; padding:3px 8px;">全削除</button>
+    </div>
     <ul id="playerManageList" style="list-style:none;"></ul>
   </div>
 </div>
@@ -949,6 +961,17 @@
       <button class="modal-close" onclick="closeCloudSyncModal()">✕</button>
     </div>
     <div class="modal-body">
+      <!-- File Protocol Warning (when opened locally on PC) -->
+      <div id="fileProtocolNotice" style="display:none; background:#FFF3E0; border:1.5px solid #FFB74D; border-radius:8px; padding:10px 12px; margin-bottom:12px; font-size:0.8rem; color:#BF360C; line-height:1.45;">
+        <strong>⚠️ パソコン上のファイル(file://)で開いています</strong><br>
+        別のスマホ等とURLで共有するには、GitHub Pagesの公開URLが必要です。<br>
+        あなたのGitHub PagesのURLを入力して「保存」を押してください：
+        <div style="display:flex; gap:6px; margin-top:6px;">
+          <input type="text" class="form-control" id="customGithubUrlInput" placeholder="https://アカウント名.github.io/リポジトリ名/" style="font-size:0.75rem; background:#fff;">
+          <button class="btn btn-warn btn-sm" onclick="saveCustomGithubUrl()" style="white-space:nowrap;">保存</button>
+        </div>
+      </div>
+
       <!-- Status Card -->
       <div id="syncStatusCard" style="background:#E8F5E9; border:1.5px solid #81C784; border-radius:10px; padding:12px; margin-bottom:14px; text-align:center;">
         <div style="font-size:0.88rem; font-weight:800; color:#1B5E20;" id="syncStatusTitle">🟢 同期中</div>
@@ -1065,13 +1088,27 @@ function getShareUrl(room) {
   if (!baseUrl.startsWith('http')) {
     let savedGithubUrl = localStorage.getItem('vb_github_pages_url') || '';
     if (!savedGithubUrl) {
-      savedGithubUrl = 'https://ユーザー名.github.io/volleyball-stats/';
+      return '';
     }
     baseUrl = savedGithubUrl;
   }
   baseUrl = baseUrl.replace(/\/index\.html$/, '');
   if (!baseUrl.endsWith('/')) baseUrl += '/';
   return `${baseUrl}?room=${encodeURIComponent(currentRoom)}`;
+}
+
+function saveCustomGithubUrl() {
+  const input = document.getElementById('customGithubUrlInput');
+  let val = (input ? input.value : '').trim();
+  if (!val) {
+    toast('GitHub PagesのURLを入力してください');
+    return;
+  }
+  if (!val.startsWith('http')) val = 'https://' + val;
+  if (!val.endsWith('/')) val += '/';
+  localStorage.setItem('vb_github_pages_url', val);
+  toast('GitHub PagesのURLを保存しました！');
+  updateCloudSyncUI();
 }
 
 function copyShareUrl() {
@@ -1083,6 +1120,23 @@ function copyShareUrl() {
   }
 
   const shareUrl = getShareUrl(room);
+  if (!shareUrl) {
+    const inputUrl = prompt(
+      '【GitHub Pagesの公開URLを入力してください】\n現在パソコン上のファイル(file://)で開いているため、スマホと共有するにはGitHub Pagesに公開したURLが必要です。\n例: https://(ユーザー名).github.io/(リポジトリ名)/',
+      localStorage.getItem('vb_github_pages_url') || 'https://'
+    );
+    if (inputUrl && inputUrl !== 'https://' && inputUrl.trim()) {
+      let clean = inputUrl.trim();
+      if (!clean.endsWith('/')) clean += '/';
+      localStorage.setItem('vb_github_pages_url', clean);
+      updateCloudSyncUI();
+      copyShareUrl();
+    } else {
+      toast('共有URLが設定されていません');
+    }
+    return;
+  }
+
   if (navigator.clipboard && navigator.clipboard.writeText) {
     navigator.clipboard.writeText(shareUrl).then(() => {
       toast('📋 共有URLをコピーしました！LINEやメールで仲間に送ってください');
@@ -1162,23 +1216,40 @@ function updateCloudSyncUI(connectedState) {
   const inputBtn = document.getElementById('inputSyncBtn');
   const shareUrlDisplay = document.getElementById('shareUrlDisplay');
   const nativeShareBtn = document.getElementById('nativeShareBtn');
+  const fileNotice = document.getElementById('fileProtocolNotice');
 
+  if (fileNotice) {
+    const isFile = window.location.protocol === 'file:';
+    fileNotice.style.display = isFile ? 'block' : 'none';
+    const customInput = document.getElementById('customGithubUrlInput');
+    if (customInput) {
+      customInput.value = localStorage.getItem('vb_github_pages_url') || '';
+    }
+  }
+
+  const shareUrl = room ? getShareUrl(room) : '';
   if (shareUrlDisplay) {
-    shareUrlDisplay.value = room ? getShareUrl(room) : '';
+    if (shareUrl) {
+      shareUrlDisplay.value = shareUrl;
+    } else if (window.location.protocol === 'file:') {
+      shareUrlDisplay.value = '※上の枠にGitHub PagesのURLを入力して保存してください';
+    } else {
+      shareUrlDisplay.value = '';
+    }
   }
   if (nativeShareBtn) {
-    nativeShareBtn.style.display = room ? 'block' : 'none';
+    nativeShareBtn.style.display = (room && shareUrl) ? 'block' : 'none';
   }
 
   if (room) {
-    const isConn = (connectedState !== undefined) ? connectedState : isSyncConnected;
+    const isConn = (connectedState !== undefined) ? connectedState : (isSyncConnected || !!localStorage.getItem('vb_last_sync_time'));
     if (statusCard) {
       statusCard.style.background = isConn ? '#E8F5E9' : '#FFF8E1';
       statusCard.style.borderColor = isConn ? '#81C784' : '#FFE082';
-      statusTitle.textContent = isConn ? `🟢 リアルタイム通信中: [ ${room} ]` : `🟡 接続待機中: [ ${room} ]`;
+      statusTitle.textContent = isConn ? `🟢 リアルタイム同期中: [ ${room} ]` : `🟡 接続確認中: [ ${room} ]`;
       statusTitle.style.color = isConn ? '#1B5E20' : '#E65100';
       const lastTime = localStorage.getItem('vb_last_sync_time') || '接続中';
-      statusDesc.textContent = `全端末でリアルタイム共有中 (最新同期: ${lastTime})`;
+      statusDesc.textContent = `合言葉 [ ${room} ] で全端末と自動共有中 (最新同期: ${lastTime})`;
     }
     if (homeBtn) {
       homeBtn.textContent = `☁️ 同期中`;
@@ -1234,7 +1305,8 @@ function saveCloudRoom() {
     return;
   }
   localStorage.setItem('vb_sync_room', room);
-  updateCloudSyncUI();
+  isSyncConnected = true;
+  updateCloudSyncUI(true);
   toast(`合言葉 [${room}] を設定しました！最新データを同期中...`);
   connectSyncStream();
   syncPullFromCloud().then(() => {
@@ -1303,10 +1375,14 @@ function connectSyncStream() {
       updateCloudSyncUI(true);
     };
     syncEventSource.onerror = () => {
-      isSyncConnected = false;
-      updateCloudSyncUI(false);
+      // EventSource handles reconnection automatically. Only set false if closed.
+      if (syncEventSource && syncEventSource.readyState === 2) {
+        isSyncConnected = false;
+        updateCloudSyncUI(false);
+      }
     };
     syncEventSource.onmessage = (event) => {
+      isSyncConnected = true;
       try {
         const ntfyMsg = JSON.parse(event.data);
         if (ntfyMsg.event === 'message') {
@@ -1428,21 +1504,16 @@ function applyRemoteSnapshot(payload) {
   if (!payload) return;
   let hasChanged = false;
 
-  // Merge players
-  if (Array.isArray(payload.players) && payload.players.length > 0) {
-    let currentPlayers = loadPlayers();
-    const set = new Set(currentPlayers);
-    let addedPlayer = false;
-    payload.players.forEach(p => {
-      if (p && !set.has(p)) {
-        currentPlayers.push(p);
-        set.add(p);
-        addedPlayer = true;
-      }
-    });
-    if (addedPlayer) {
-      savePlayers(currentPlayers);
+  // Sync players (timestamp-based: respects additions and deletions across devices)
+  if (Array.isArray(payload.players)) {
+    const remoteTime = payload.playersUpdatedAt || payload.time || 0;
+    const localTime = parseInt(localStorage.getItem('vb_players_updated_at') || '0', 10);
+    if (remoteTime > localTime || (localTime === 0 && payload.players.length > 0)) {
+      savePlayers(payload.players);
+      localStorage.setItem('vb_players_updated_at', String(remoteTime));
       hasChanged = true;
+      const pmList = document.getElementById('playerManageList');
+      if (pmList) renderPlayerManageList();
     }
   }
 
@@ -1522,14 +1593,16 @@ async function broadcastSyncAction(actionObj) {
   actionObj.time = Date.now();
 
   try {
+    // Send without custom headers to avoid CORS preflight (OPTIONS) failure
     await fetch(`https://ntfy.sh/${topic}`, {
       method: 'POST',
-      body: JSON.stringify(actionObj),
-      headers: { 'Title': 'vb_action' }
+      mode: 'cors',
+      body: JSON.stringify(actionObj)
     });
     const timeStr = new Date().toLocaleTimeString('ja-JP', { hour:'2-digit', minute:'2-digit', second:'2-digit' });
     localStorage.setItem('vb_last_sync_time', timeStr);
-    updateCloudSyncUI();
+    isSyncConnected = true;
+    updateCloudSyncUI(true);
   } catch (e) {
     console.warn('Action broadcast failed:', e);
   }
@@ -1552,31 +1625,23 @@ async function syncPushToCloud(isSilent = false) {
       type: 'state_snapshot',
       sender: myClientId,
       time: Date.now(),
+      playersUpdatedAt: parseInt(localStorage.getItem('vb_players_updated_at') || '0', 10) || Date.now(),
       players: players,
       matches: matches
     };
     const jsonStr = JSON.stringify(payload);
 
-    if (jsonStr.length < 3500) {
-      await fetch(`https://ntfy.sh/${topic}`, {
-        method: 'POST',
-        body: jsonStr,
-        headers: { 'Title': 'vb_snapshot' }
-      });
-    } else {
-      await fetch(`https://ntfy.sh/${topic}`, {
-        method: 'PUT',
-        body: jsonStr,
-        headers: {
-          'Filename': 'vb_snapshot.json',
-          'Title': 'vb_snapshot'
-        }
-      });
-    }
+    // Standard POST without custom headers avoids CORS preflight rejection
+    await fetch(`https://ntfy.sh/${topic}`, {
+      method: 'POST',
+      mode: 'cors',
+      body: jsonStr
+    });
 
     const timeStr = new Date().toLocaleTimeString('ja-JP', { hour:'2-digit', minute:'2-digit', second:'2-digit' });
     localStorage.setItem('vb_last_sync_time', timeStr);
-    updateCloudSyncUI();
+    isSyncConnected = true;
+    updateCloudSyncUI(true);
     if (!isSilent) toast('☁️ クラウドへデータを保存しました！');
   } catch (err) {
     if (!isSilent) toast('クラウドへの保存に失敗しました');
@@ -1592,7 +1657,10 @@ async function syncPullFromCloud(isSilent = false) {
   if (!topic) return false;
 
   try {
-    const res = await fetch(`https://ntfy.sh/${topic}/json?poll=1&since=all`);
+    const res = await fetch(`https://ntfy.sh/${topic}/json?poll=1&since=all`, {
+      mode: 'cors',
+      cache: 'no-cache'
+    });
     if (!res.ok) return false;
     const text = await res.text();
     if (text) {
@@ -1613,7 +1681,8 @@ async function syncPullFromCloud(isSilent = false) {
 
     const timeStr = new Date().toLocaleTimeString('ja-JP', { hour:'2-digit', minute:'2-digit', second:'2-digit' });
     localStorage.setItem('vb_last_sync_time', timeStr);
-    updateCloudSyncUI();
+    isSyncConnected = true;
+    updateCloudSyncUI(true);
     if (!isSilent) toast('🔄 最新の共有データを同期しました！');
     return true;
   } catch (e) {
@@ -1630,7 +1699,7 @@ function startAutoSyncLoop() {
   const room = getCloudRoom();
   if (!room) return;
 
-  // Background health check & poll every 15s
+  // Hybrid sync: polls every 4s to guarantee sync even if SSE connection drops on mobile
   syncTimer = setInterval(() => {
     if (isAutoPullOn()) {
       if (!syncEventSource || syncEventSource.readyState === 2) {
@@ -1638,7 +1707,7 @@ function startAutoSyncLoop() {
       }
       syncPullFromCloud(true);
     }
-  }, 15000);
+  }, 4000);
 }
 
 // Background auto reconnection on visibility / focus change (iOS Safari sleep recovery)
@@ -2956,7 +3025,9 @@ function addPlayer() {
   if (players.includes(name)) { toast('すでに登録されています'); return; }
   players.push(name);
   savePlayers(players);
+  localStorage.setItem('vb_players_updated_at', String(Date.now()));
   input.value = '';
+  input.blur();
   renderPlayerManageList();
   toast(`${name} を登録しました`);
   syncPushToCloud(true);
@@ -2966,8 +3037,17 @@ function deletePlayer(idx) {
   const name = players[idx];
   players.splice(idx, 1);
   savePlayers(players);
+  localStorage.setItem('vb_players_updated_at', String(Date.now()));
   renderPlayerManageList();
   toast(`${name} を削除しました`);
+  syncPushToCloud(true);
+}
+function clearAllPlayers() {
+  if (!confirm('登録されている選手をすべて削除しますか？')) return;
+  savePlayers([]);
+  localStorage.setItem('vb_players_updated_at', String(Date.now()));
+  renderPlayerManageList();
+  toast('選手名簿をクリアしました');
   syncPushToCloud(true);
 }
 
@@ -2983,11 +3063,17 @@ function esc(s) {
 }
 
 (function init() {
-  // 初期選手登録（初回空ならサンプル選手を投入するか、ユーザーの過去データにある選手を用意）
-  let p = loadPlayers();
-  if (p.length === 0) {
-    savePlayers(['かなえ', 'ちづる', 'くるみ', 'ななみ', 'りみ', 'まりん', 'さち', 'みちる', 'はるき']);
+  // 以前のサンプル選手「ちづる」「千鶴」を初回自動クリーンアップ
+  if (!localStorage.getItem('vb_cleaned_chizuru_v2')) {
+    let cur = loadPlayers();
+    const filtered = cur.filter(p => p !== 'ちづる' && p !== '千鶴');
+    if (filtered.length !== cur.length) {
+      savePlayers(filtered);
+      localStorage.setItem('vb_players_updated_at', String(Date.now()));
+    }
+    localStorage.setItem('vb_cleaned_chizuru_v2', '1');
   }
+
   renderMatchList();
   showScreen('homeScreen');
   // Check URL params for auto room join (?room=...)
