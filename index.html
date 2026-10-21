@@ -532,7 +532,10 @@
 <div id="homeScreen" class="screen">
   <div class="header">
     <h1>🏐 バレーボール統計</h1>
-    <button class="header-btn" onclick="openPlayerManage()">選手管理</button>
+    <div style="display:flex; gap:6px;">
+      <button class="header-btn" onclick="openBackupModal()">🔄 データ引き継ぎ</button>
+      <button class="header-btn" onclick="openPlayerManage()">選手管理</button>
+    </div>
   </div>
   <div class="content scroll-content">
     <div style="text-align:center; padding: 16px 0 8px; font-size: 2.2rem;">🏐</div>
@@ -846,6 +849,60 @@
     <div class="modal-footer">
       <button class="btn btn-outline btn-md" onclick="closeDeleteMatch()">キャンセル</button>
       <button class="btn btn-danger btn-md" onclick="confirmDeleteMatch()">削除する</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- ============================================================
+     MODAL: BACKUP & DATA TRANSFER (データ引き継ぎ)
+     ============================================================ -->
+<div class="modal-overlay hidden" id="backupModal">
+  <div class="modal" style="max-width:500px;">
+    <div class="modal-header">
+      <span>🔄 端末間のデータ引き継ぎ</span>
+      <button class="modal-close" onclick="closeBackupModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <!-- Section 1: Export -->
+      <div style="background:#F5F7FA; border:1px solid #DCE2E8; border-radius:10px; padding:12px; margin-bottom:16px;">
+        <div style="font-weight:800; font-size:0.92rem; margin-bottom:6px; color:#1565C0;">
+          📤 1. この端末のデータを書き出す
+        </div>
+        <p style="font-size:0.8rem; color:#616161; margin-bottom:10px;">
+          このスマホ・PCに保存されている選手名簿と全試合データを書き出します。
+        </p>
+        <div style="display:flex; gap:8px; flex-wrap:wrap;">
+          <button class="btn btn-primary btn-md" onclick="downloadBackupFile()">📁 ファイルで書き出す (.json)</button>
+          <button class="btn btn-outline btn-md" onclick="copyBackupText()">📋 引き継ぎテキストをコピー</button>
+        </div>
+      </div>
+
+      <!-- Section 2: Import -->
+      <div style="background:#F5F7FA; border:1px solid #DCE2E8; border-radius:10px; padding:12px;">
+        <div style="font-weight:800; font-size:0.92rem; margin-bottom:6px; color:#2E7D32;">
+          📥 2. 別の端末からデータを取り込む
+        </div>
+        <p style="font-size:0.8rem; color:#616161; margin-bottom:10px;">
+          別の端末から送ったファイルまたはテキストからデータを復元します（既存データと統合されます）。
+        </p>
+
+        <!-- Method A: File -->
+        <div style="margin-bottom:12px;">
+          <label class="form-label">【方法A】バックアップファイルを選択</label>
+          <input type="file" id="backupFileInput" accept=".json,text/plain" class="form-control" onchange="importBackupFile(event)" style="background:#fff;">
+        </div>
+
+        <!-- Method B: Text Paste -->
+        <div>
+          <label class="form-label">【方法B】引き継ぎテキストを貼り付け</label>
+          <textarea id="backupTextarea" class="form-control" rows="3" placeholder="コピーした引き継ぎテキストをここに貼り付け" style="background:#fff; font-size:0.8rem; font-family:monospace;"></textarea>
+          <button class="btn btn-success btn-md btn-block" style="margin-top:8px;" onclick="importBackupFromText()">📥 テキストからデータを取り込む</button>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-primary btn-md" onclick="closeBackupModal()">閉じる</button>
     </div>
   </div>
 </div>
