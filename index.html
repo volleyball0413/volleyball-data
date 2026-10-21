@@ -533,8 +533,9 @@
   <div class="header">
     <h1>🏐 バレーボール統計</h1>
     <div style="display:flex; gap:6px;">
-      <button class="header-btn" onclick="openBackupModal()">🔄 データ引き継ぎ</button>
-      <button class="header-btn" onclick="openPlayerManage()">選手管理</button>
+      <button class="header-btn" id="homeSyncBtn" onclick="openCloudSyncModal()">☁️ 共有同期</button>
+      <button class="header-btn" onclick="openBackupModal()">🔄 移行</button>
+      <button class="header-btn" onclick="openPlayerManage()">名簿</button>
     </div>
   </div>
   <div class="content scroll-content">
@@ -543,9 +544,25 @@
       サーブ・レセプション・スパイクを簡単リアルタイム記録
     </div>
 
-    <button class="btn btn-primary btn-lg btn-block" style="margin-bottom:18px;" onclick="openNewMatch()">
+    <button class="btn btn-primary btn-lg btn-block" style="margin-bottom:12px;" onclick="openNewMatch()">
       ＋ 新規試合を作成
     </button>
+
+    <!-- Prominent Cloud Sync Banner -->
+    <div class="card" style="border: 2px solid #81C784; background: #E8F5E9; margin-bottom: 18px; cursor: pointer;" onclick="openCloudSyncModal()">
+      <div class="card-body" style="padding: 12px 14px; display: flex; align-items: center; justify-content: space-between;">
+        <div>
+          <div style="font-weight: 800; font-size: 0.95rem; color: #1B5E20; display: flex; align-items: center; gap: 6px;">
+            <span>☁️ 複数端末でのリアルタイム共有</span>
+            <span id="homeSyncBadge" style="font-size: 0.75rem; background: #C8E6C9; color: #1B5E20; padding: 2px 8px; border-radius: 12px; font-weight:700;">未設定</span>
+          </div>
+          <div style="font-size: 0.78rem; color: #388E3C; margin-top: 3px;" id="homeSyncSubtext">
+            合言葉を入れると他のiPhoneやPCと自動で繋がります
+          </div>
+        </div>
+        <button class="btn btn-sm btn-success" style="pointer-events: none; white-space:nowrap;">設定 ➜</button>
+      </div>
+    </div>
 
     <div style="font-size:0.85rem; font-weight:700; color:var(--text2); margin-bottom:8px;">試合一覧</div>
     <div id="matchList"></div>
@@ -559,7 +576,8 @@
   <div class="header">
     <button class="header-btn" onclick="goHome()">← 戻る</button>
     <h1 id="inputMatchTitle"></h1>
-    <button class="header-btn" onclick="showStats()">集計表 📊</button>
+    <button class="header-btn" id="inputSyncBtn" onclick="openCloudSyncModal()" style="font-size:0.8rem; padding:6px 9px;">☁️</button>
+    <button class="header-btn" onclick="showStats()">集計 📊</button>
   </div>
 
   <!-- Category Tabs -->
@@ -907,6 +925,62 @@
   </div>
 </div>
 
+
+<!-- ============================================================
+     MODAL: CLOUD SYNC (合言葉による複数端末自動同期)
+     ============================================================ -->
+<div class="modal-overlay hidden" id="cloudSyncModal">
+  <div class="modal" style="max-width:480px;">
+    <div class="modal-header">
+      <span>☁️ 複数端末でのリアルタイム共有・同期</span>
+      <button class="modal-close" onclick="closeCloudSyncModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <!-- Status Card -->
+      <div id="syncStatusCard" style="background:#E8F5E9; border:1.5px solid #81C784; border-radius:10px; padding:12px; margin-bottom:14px; text-align:center;">
+        <div style="font-size:0.88rem; font-weight:800; color:#1B5E20;" id="syncStatusTitle">🟢 同期中</div>
+        <div style="font-size:0.78rem; color:#388E3C; margin-top:3px;" id="syncStatusDesc">合言葉を設定すると自動で全端末にデータが共有されます</div>
+      </div>
+
+      <!-- Room Key Setting -->
+      <div class="form-group">
+        <label class="form-label">チームの合言葉（ルーム名）</label>
+        <div style="display:flex; gap:6px;">
+          <input type="text" class="form-control" id="syncRoomInput" placeholder="例: sakura-volleyball" style="font-weight:700;">
+          <button class="btn btn-primary btn-md" onclick="saveCloudRoom()" style="white-space:nowrap;">設定</button>
+        </div>
+        <span style="font-size:0.75rem; color:#757575; display:block; margin-top:4px;">
+          ※別のiPhoneやパソコンでも<strong>全く同じ合言葉</strong>を入力するだけで、自動でデータが繋がります。
+        </span>
+      </div>
+
+      <!-- Action Buttons -->
+      <div style="display:flex; gap:8px; margin-top:14px; flex-wrap:wrap;">
+        <button class="btn btn-teal btn-md" style="flex:1;" onclick="manualPushCloud()">☁️ 今すぐクラウドへ保存</button>
+        <button class="btn btn-outline btn-md" style="flex:1;" onclick="manualPullCloud()">🔄 クラウドから最新取得</button>
+      </div>
+
+      <div style="margin-top:16px; border-top:1px solid #DCE2E8; padding-top:12px;">
+        <label style="display:flex; align-items:center; gap:8px; font-size:0.85rem; font-weight:600; cursor:pointer;">
+          <input type="checkbox" id="autoSyncCheckbox" onchange="toggleAutoSync()" checked style="width:18px; height:18px;">
+          <span>データを入力した時に自動でクラウドへ保存する</span>
+        </label>
+        <label style="display:flex; align-items:center; gap:8px; font-size:0.85rem; font-weight:600; cursor:pointer; margin-top:8px;">
+          <input type="checkbox" id="autoPullCheckbox" onchange="toggleAutoPull()" checked style="width:18px; height:18px;">
+          <span>15秒ごとに他の端末の最新データを自動で受け取る</span>
+        </label>
+      </div>
+
+      <div style="margin-top:14px; text-align:right;">
+        <button class="btn btn-sm btn-outline" style="color:#C62828; border-color:#EF9A9A;" onclick="clearCloudRoom()">合言葉の解除（同期オフ）</button>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-primary btn-md" onclick="closeCloudSyncModal()">閉じる</button>
+    </div>
+  </div>
+</div>
+
 <!-- Toast -->
 <div id="toast"></div>
 
@@ -928,6 +1002,408 @@ function loadMatches() {
 function saveMatches(arr) { localStorage.setItem('vb_matches', JSON.stringify(arr)); }
 
 function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
+
+// ============================================================
+// CLOUD SYNC & MULTI-DEVICE REAL-TIME SHARING (合言葉同期)
+// ============================================================
+let syncTimer = null;
+let lastSyncHash = '';
+let isSyncing = false;
+
+function getCloudRoom() {
+  return (localStorage.getItem('vb_sync_room') || '').trim();
+}
+
+function openCloudSyncModal() {
+  const room = getCloudRoom();
+  document.getElementById('syncRoomInput').value = room;
+  updateCloudSyncUI();
+  document.getElementById('cloudSyncModal').classList.remove('hidden');
+}
+function closeCloudSyncModal() {
+  document.getElementById('cloudSyncModal').classList.add('hidden');
+}
+
+function updateCloudSyncUI() {
+  const room = getCloudRoom();
+  const statusCard = document.getElementById('syncStatusCard');
+  const statusTitle = document.getElementById('syncStatusTitle');
+  const statusDesc = document.getElementById('syncStatusDesc');
+  const homeBtn = document.getElementById('homeSyncBtn');
+  const inputBtn = document.getElementById('inputSyncBtn');
+
+  if (room) {
+    if (statusCard) {
+      statusCard.style.background = '#E8F5E9';
+      statusCard.style.borderColor = '#81C784';
+      statusTitle.textContent = `🟢 同期中: [ ${room} ]`;
+      statusTitle.style.color = '#1B5E20';
+      const lastTime = localStorage.getItem('vb_last_sync_time') || '未実行';
+      statusDesc.textContent = `最終同期: ${lastTime} (全端末でリアルタイム共有中)`;
+    }
+    if (homeBtn) {
+      homeBtn.textContent = `☁️ 同期中`;
+      homeBtn.style.background = '#2E7D32';
+    }
+    const homeBadge = document.getElementById('homeSyncBadge');
+    const homeSub = document.getElementById('homeSyncSubtext');
+    if (homeBadge) {
+      homeBadge.textContent = '🟢 同期中: ' + room;
+      homeBadge.style.background = '#A5D6A7';
+    }
+    if (homeSub) {
+      const lastTime = localStorage.getItem('vb_last_sync_time') || '同期済み';
+      homeSub.textContent = `全端末で共有中 (最終: ${lastTime})`;
+    }
+    if (inputBtn) {
+      inputBtn.textContent = `☁️●`;
+      inputBtn.style.background = '#2E7D32';
+    }
+  } else {
+    if (statusCard) {
+      statusCard.style.background = '#F5F7FA';
+      statusCard.style.borderColor = '#DCE2E8';
+      statusTitle.textContent = '⚪ クラウド同期: 未設定';
+      statusTitle.style.color = '#616161';
+      statusDesc.textContent = 'チームで決めた「合言葉」を入力すると複数端末で自動共有されます';
+    }
+    if (homeBtn) {
+      homeBtn.textContent = '☁️ 共有同期';
+      homeBtn.style.background = 'rgba(255,255,255,0.18)';
+    }
+    const homeBadge = document.getElementById('homeSyncBadge');
+    const homeSub = document.getElementById('homeSyncSubtext');
+    if (homeBadge) {
+      homeBadge.textContent = '未設定';
+      homeBadge.style.background = '#C8E6C9';
+    }
+    if (homeSub) {
+      homeSub.textContent = '合言葉を入れると他のiPhoneやPCと自動で繋がります';
+    }
+    if (inputBtn) {
+      inputBtn.textContent = '☁️';
+      inputBtn.style.background = 'rgba(255,255,255,0.18)';
+    }
+  }
+}
+
+function saveCloudRoom() {
+  const input = document.getElementById('syncRoomInput');
+  const room = input.value.trim();
+  if (!room) {
+    toast('合言葉を入力してください');
+    return;
+  }
+  localStorage.setItem('vb_sync_room', room);
+  updateCloudSyncUI();
+  toast(`合言葉 [${room}] を設定しました！最新データを取得中...`);
+  syncPullFromCloud().then(hasData => {
+    if (!hasData) {
+      syncPushToCloud(false);
+    }
+  });
+  startAutoSyncLoop();
+}
+
+function clearCloudRoom() {
+  if (!confirm('合言葉の同期を解除しますか？（端末内のデータは消えません）')) return;
+  localStorage.removeItem('vb_sync_room');
+  updateCloudSyncUI();
+  if (syncTimer) clearInterval(syncTimer);
+  toast('同期をオフにしました');
+}
+
+function toggleAutoSync() {
+  const chk = document.getElementById('autoSyncCheckbox');
+  localStorage.setItem('vb_auto_sync', chk.checked ? '1' : '0');
+}
+function isAutoSyncOn() {
+  return localStorage.getItem('vb_auto_sync') !== '0';
+}
+
+function toggleAutoPull() {
+  const chk = document.getElementById('autoPullCheckbox');
+  localStorage.setItem('vb_auto_pull', chk.checked ? '1' : '0');
+  startAutoSyncLoop();
+}
+function isAutoPullOn() {
+  return localStorage.getItem('vb_auto_pull') !== '0';
+}
+
+function getRoomCloudUrl(room) {
+  let safeRoom = '';
+  for (let i = 0; i < room.length; i++) {
+    const code = room.charCodeAt(i);
+    safeRoom += code.toString(16);
+  }
+  return `https://kvdb.io/4y9nNxC8dZ6vK7wB3q5L8P/vb_${safeRoom}`;
+}
+
+async function syncPushToCloud(isSilent = false) {
+  const room = getCloudRoom();
+  if (!room || isSyncing) return;
+  isSyncing = true;
+
+  try {
+    const players = loadPlayers();
+    const matches = loadMatches();
+    const payload = {
+      version: '1.0',
+      room: room,
+      updatedAt: Date.now(),
+      players: players,
+      matches: matches
+    };
+    const jsonStr = JSON.stringify(payload);
+    lastSyncHash = jsonStr;
+
+    const url = getRoomCloudUrl(room);
+    const res = await fetch(url, {
+      method: 'POST',
+      body: jsonStr,
+      headers: { 'Content-Type': 'application/json' }
+    });
+
+    if (res.ok) {
+      const timeStr = new Date().toLocaleTimeString('ja-JP', { hour:'2-digit', minute:'2-digit', second:'2-digit' });
+      localStorage.setItem('vb_last_sync_time', timeStr);
+      updateCloudSyncUI();
+      if (!isSilent) toast('☁️ クラウドへデータを保存しました！');
+    }
+  } catch (err) {
+    if (!isSilent) toast('クラウドへの保存に失敗しました');
+  } finally {
+    isSyncing = false;
+  }
+}
+
+async function syncPullFromCloud(isSilent = false) {
+  const room = getCloudRoom();
+  if (!room || isSyncing) return false;
+  isSyncing = true;
+
+  try {
+    const url = getRoomCloudUrl(room);
+    const res = await fetch(url + '?_t=' + Date.now());
+    if (res.status === 404) return false;
+    if (!res.ok) return false;
+
+    const text = await res.text();
+    if (!text || text === lastSyncHash) return true;
+    lastSyncHash = text;
+
+    const cloudData = JSON.parse(text);
+    if (!cloudData || (!cloudData.players && !cloudData.matches)) return false;
+
+    let localPlayers = loadPlayers();
+    if (Array.isArray(cloudData.players)) {
+      cloudData.players.forEach(p => {
+        if (!localPlayers.includes(p)) localPlayers.push(p);
+      });
+      savePlayers(localPlayers);
+    }
+
+    let localMatches = loadMatches();
+    let hasChanged = false;
+    if (Array.isArray(cloudData.matches)) {
+      cloudData.matches.forEach(cloudM => {
+        const localM = localMatches.find(m => m.id === cloudM.id);
+        if (!localM) {
+          localMatches.push(cloudM);
+          hasChanged = true;
+        } else {
+          if (!localM.records) localM.records = [];
+          if (cloudM.records && Array.isArray(cloudM.records)) {
+            const localRecIds = new Set(localM.records.map(r => r.id));
+            let newRecs = false;
+            cloudM.records.forEach(cr => {
+              if (!localRecIds.has(cr.id)) {
+                localM.records.push(cr);
+                newRecs = true;
+                hasChanged = true;
+              }
+            });
+            if (newRecs) {
+              localM.records.sort((a,b) => (a.ts || 0) - (b.ts || 0));
+            }
+          }
+          if (cloudM.courtPlayers) {
+            localM.courtPlayers = Object.assign({}, localM.courtPlayers, cloudM.courtPlayers);
+          }
+        }
+      });
+      if (hasChanged) {
+        saveMatches(localMatches);
+      }
+    }
+
+    const timeStr = new Date().toLocaleTimeString('ja-JP', { hour:'2-digit', minute:'2-digit', second:'2-digit' });
+    localStorage.setItem('vb_last_sync_time', timeStr);
+    updateCloudSyncUI();
+
+    if (hasChanged) {
+      if (currentMatchId) {
+        renderPlayerBtns();
+        updateUndoBar();
+        const statsSc = document.getElementById('statsScreen');
+        if (statsSc && !statsSc.classList.contains('hidden')) {
+          renderStats();
+        }
+      } else {
+        renderMatchList();
+      }
+      if (!isSilent) toast('🔄 最新の共有データを同期しました！');
+    }
+    return true;
+  } catch (err) {
+    return false;
+  } finally {
+    isSyncing = false;
+  }
+}
+
+function manualPushCloud() { syncPushToCloud(false); }
+function manualPullCloud() { syncPullFromCloud(false); }
+
+function startAutoSyncLoop() {
+  if (syncTimer) clearInterval(syncTimer);
+  const room = getCloudRoom();
+  if (!room) return;
+
+  syncTimer = setInterval(() => {
+    if (isAutoPullOn()) {
+      syncPullFromCloud(true);
+    }
+  }, 12000);
+}
+
+function triggerAutoPushAfterRecord() {
+  const room = getCloudRoom();
+  if (room && isAutoSyncOn()) {
+    clearTimeout(window._pushDebounce);
+    window._pushDebounce = setTimeout(() => {
+      syncPushToCloud(true);
+    }, 600);
+  }
+}
+
+// ============================================================
+// DATA BACKUP & TRANSFER (ファイル移行機能)
+// ============================================================
+function openBackupModal() {
+  document.getElementById('backupTextarea').value = '';
+  document.getElementById('backupFileInput').value = '';
+  document.getElementById('backupModal').classList.remove('hidden');
+}
+function closeBackupModal() {
+  document.getElementById('backupModal').classList.add('hidden');
+}
+
+function getBackupPayload() {
+  const players = loadPlayers();
+  const matches = loadMatches();
+  return JSON.stringify({
+    version: '1.0',
+    exportDate: new Date().toISOString(),
+    players: players,
+    matches: matches
+  }, null, 2);
+}
+
+function downloadBackupFile() {
+  const payload = getBackupPayload();
+  const dateStr = new Date().toISOString().slice(0, 10);
+  const blob = new Blob([payload], { type: 'application/json;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `volleyball_backup_${dateStr}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+  toast('📁 バックアップファイルを保存しました');
+}
+
+function copyBackupText() {
+  const payload = getBackupPayload();
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(payload).then(() => {
+      toast('📋 引き継ぎテキストをコピーしました');
+    }).catch(() => {
+      copyBackupTextFallback(payload);
+    });
+  } else {
+    copyBackupTextFallback(payload);
+  }
+}
+
+function copyBackupTextFallback(text) {
+  const ta = document.createElement('textarea');
+  ta.value = text;
+  document.body.appendChild(ta);
+  ta.select();
+  document.execCommand('copy');
+  document.body.removeChild(ta);
+  toast('📋 引き継ぎテキストをコピーしました');
+}
+
+function processImportData(jsonStr) {
+  try {
+    const data = JSON.parse(jsonStr);
+    if (!data.players && !data.matches) {
+      toast('無効なバックアップデータです');
+      return;
+    }
+
+    let currentPlayers = loadPlayers();
+    if (Array.isArray(data.players)) {
+      data.players.forEach(p => {
+        if (!currentPlayers.includes(p)) currentPlayers.push(p);
+      });
+      savePlayers(currentPlayers);
+    }
+
+    let currentMatches = loadMatches();
+    let importedCount = 0;
+    if (Array.isArray(data.matches)) {
+      data.matches.forEach(newM => {
+        const idx = currentMatches.findIndex(m => m.id === newM.id);
+        if (idx >= 0) {
+          currentMatches[idx] = newM;
+        } else {
+          currentMatches.push(newM);
+        }
+        importedCount++;
+      });
+      saveMatches(currentMatches);
+    }
+
+    renderMatchList();
+    closeBackupModal();
+    toast(`✅ データの引き継ぎに成功しました！(試合: ${importedCount}件)`);
+  } catch (err) {
+    alert('データの読み込みに失敗しました。正しいデータかご確認ください。');
+  }
+}
+
+function importBackupFile(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(evt) {
+    processImportData(evt.target.result);
+  };
+  reader.readAsText(file, 'utf-8');
+}
+
+function importBackupFromText() {
+  const str = document.getElementById('backupTextarea').value.trim();
+  if (!str) {
+    toast('引き継ぎテキストを貼り付けてください');
+    return;
+  }
+  processImportData(str);
+}
+
 
 // ============================================================
 
@@ -971,6 +1447,12 @@ function goHome() {
   selectedPlayer = null;
   renderMatchList();
   showScreen('homeScreen');
+  // Initialize Cloud Sync if room is configured
+  updateCloudSyncUI();
+  if (getCloudRoom()) {
+    syncPullFromCloud(true);
+    startAutoSyncLoop();
+  }
 }
 
 function showStats() {
@@ -1218,6 +1700,7 @@ function recordAction(cat, val) {
   const catLabel = cat === 'serve' ? 'サーブ' : cat === 'receive' ? 'レセプション' : 'スパイク';
   const valLabel = formatVal(cat, val);
   toast(`[S${currentSet}] ${selectedPlayer}：${catLabel} [${valLabel}]`);
+  triggerAutoPushAfterRecord();
 }
 
 function formatVal(cat, val) {
@@ -1316,6 +1799,7 @@ function deleteSingleRecord(id) {
   updateMatch(match);
   updateUndoBar();
   renderLogsList();
+  triggerAutoPushAfterRecord();
   toast(`削除しました: ${item.player} [${formatVal(item.cat, item.val)}]`);
 }
 
@@ -1383,6 +1867,7 @@ function saveRecordEdit() {
   updateUndoBar();
   closeEditRecordModal();
   renderLogsList();
+  triggerAutoPushAfterRecord();
   toast('記録を変更しました');
 }
 
@@ -2120,6 +2605,12 @@ function esc(s) {
   }
   renderMatchList();
   showScreen('homeScreen');
+  // Initialize Cloud Sync if room is configured
+  updateCloudSyncUI();
+  if (getCloudRoom()) {
+    syncPullFromCloud(true);
+    startAutoSyncLoop();
+  }
 })();
 </script>
 </body>
