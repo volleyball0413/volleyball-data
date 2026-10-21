@@ -582,9 +582,10 @@
 
   <!-- Quick Jump Anchors -->
   <div style="display:flex; background:#fff; border-bottom:1px solid var(--border); padding:6px 12px; gap:8px; overflow-x:auto;">
-    <button class="btn btn-outline btn-sm" style="flex:1; padding:5px 4px; font-size:0.8rem;" onclick="document.getElementById('secServe').scrollIntoView({behavior:'smooth'})">🏐 サーブへ</button>
-    <button class="btn btn-outline btn-sm" style="flex:1; padding:5px 4px; font-size:0.8rem;" onclick="document.getElementById('secReceive').scrollIntoView({behavior:'smooth'})">🛡️ レセプションへ</button>
-    <button class="btn btn-outline btn-sm" style="flex:1; padding:5px 4px; font-size:0.8rem;" onclick="document.getElementById('secSpike').scrollIntoView({behavior:'smooth'})">💥 スパイクへ</button>
+    <button class="btn btn-outline btn-sm" style="flex:1; padding:5px 3px; font-size:0.78rem;" onclick="document.getElementById('secServe').scrollIntoView({behavior:'smooth'})">🏐 サーブ</button>
+    <button class="btn btn-outline btn-sm" style="flex:1; padding:5px 3px; font-size:0.78rem;" onclick="document.getElementById('secReceive').scrollIntoView({behavior:'smooth'})">🛡️ レセプション</button>
+    <button class="btn btn-outline btn-sm" style="flex:1; padding:5px 3px; font-size:0.78rem;" onclick="document.getElementById('secToss').scrollIntoView({behavior:'smooth'})">🎯 トス</button>
+    <button class="btn btn-outline btn-sm" style="flex:1; padding:5px 3px; font-size:0.78rem;" onclick="document.getElementById('secSpike').scrollIntoView({behavior:'smooth'})">💥 スパイク</button>
   </div>
 
   <!-- Set Selector -->
@@ -644,7 +645,22 @@
         </div>
       </div>
 
-      <!-- 3. スパイク -->
+            <!-- 3. トス (トスの質) -->
+      <div id="secToss" style="background:#fff; border:1px solid #DCE2E8; border-radius:12px; padding:10px 12px; margin-bottom:12px; box-shadow:0 1px 4px rgba(0,0,0,0.04);">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+          <span style="font-size:0.88rem; font-weight:800; color:#5E35B1;">🎯 トス (トスの質)</span>
+          <span style="font-size:0.72rem; color:#757575;">M=トスミス</span>
+        </div>
+        <div class="action-grid action-grid-serve">
+          <button class="action-btn btn-A" onclick="recordAction('toss','A')">A<span class="btn-label">完璧</span></button>
+          <button class="action-btn btn-B" onclick="recordAction('toss','B')">B<span class="btn-label">良い</span></button>
+          <button class="action-btn btn-C" onclick="recordAction('toss','C')">C<span class="btn-label" style="font-size:0.62rem; letter-spacing:-0.5px;">強打打てない</span></button>
+          <button class="action-btn btn-D" onclick="recordAction('toss','D')">D<span class="btn-label" style="font-size:0.6rem; letter-spacing:-0.5px;">スタンディング</span></button>
+          <button class="action-btn btn-M" onclick="recordAction('toss','M')">M<span class="btn-label">ミス</span></button>
+        </div>
+      </div>
+
+<!-- 3. スパイク -->
       <div id="secSpike" style="background:#fff; border:1px solid #DCE2E8; border-radius:12px; padding:10px 12px; margin-bottom:12px; box-shadow:0 1px 4px rgba(0,0,0,0.04);">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
           <span style="font-size:0.88rem; font-weight:800; color:#E65100;">💥 スパイク</span>
@@ -807,6 +823,7 @@
         <select class="form-control" id="editRecordCat" onchange="updateEditValOptions()">
           <option value="serve">サーブ効果率</option>
           <option value="receive">レセプション</option>
+          <option value="toss">トス</option>
           <option value="spike">スパイク</option>
         </select>
       </div>
@@ -950,29 +967,34 @@
         </span>
       </div>
 
-      <!-- Action Buttons -->
-            <!-- Action Buttons -->
-      <div style="margin-bottom:12px;">
-        <button class="btn btn-primary btn-md btn-block" onclick="copyShareUrl()" style="font-size:0.95rem; padding:12px;">
-          🔗 この共有URLをコピー（LINE等で送るだけ！）
-        </button>
-        <span style="font-size:0.75rem; color:#616161; display:block; margin-top:4px; text-align:center;">
-          ※このURLを開いた端末同士は、何もしなくても自動で同じデータになります
+      <!-- Share URL Display & Copy -->
+      <div class="form-group" style="margin-top:14px; background:#F8FAFC; border:1px solid #DCE2E8; border-radius:8px; padding:10px;">
+        <label class="form-label" style="margin-bottom:4px; font-weight:700;">🔗 共有用URL（タップで自動参加）</label>
+        <div style="display:flex; gap:6px;">
+          <input type="text" class="form-control" id="shareUrlDisplay" readonly style="font-size:0.78rem; background:#fff; font-family:monospace; color:#333;" placeholder="合言葉を設定するとURLが表示されます">
+          <button class="btn btn-primary btn-md" onclick="copyShareUrl()" style="white-space:nowrap;">📋 コピー</button>
+        </div>
+        <div style="display:flex; gap:6px; margin-top:8px;">
+          <button class="btn btn-teal btn-sm btn-block" id="nativeShareBtn" onclick="triggerNativeShare()" style="display:none; font-size:0.85rem; padding:8px;">📲 LINEやメッセージで送る (シェア)</button>
+        </div>
+        <span style="font-size:0.72rem; color:#616161; display:block; margin-top:5px; text-align:center;">
+          ※URLを開いた人は、合言葉の入力なしで自動的に同じルームに繋がります
         </span>
       </div>
+
       <div style="display:flex; gap:8px; margin-top:14px; flex-wrap:wrap;">
-        <button class="btn btn-teal btn-md" style="flex:1;" onclick="manualPushCloud()">☁️ 今すぐクラウドへ保存</button>
-        <button class="btn btn-outline btn-md" style="flex:1;" onclick="manualPullCloud()">🔄 クラウドから最新取得</button>
+        <button class="btn btn-primary btn-md" style="flex:1;" onclick="manualPushCloud()">☁️ 今すぐ全体保存</button>
+        <button class="btn btn-outline btn-md" style="flex:1;" onclick="manualPullCloud()">🔄 今すぐ最新取得</button>
       </div>
 
       <div style="margin-top:16px; border-top:1px solid #DCE2E8; padding-top:12px;">
         <label style="display:flex; align-items:center; gap:8px; font-size:0.85rem; font-weight:600; cursor:pointer;">
           <input type="checkbox" id="autoSyncCheckbox" onchange="toggleAutoSync()" checked style="width:18px; height:18px;">
-          <span>データを入力した時に自動でクラウドへ保存する</span>
+          <span>データを入力した時に自動でクラウドへ送信する</span>
         </label>
         <label style="display:flex; align-items:center; gap:8px; font-size:0.85rem; font-weight:600; cursor:pointer; margin-top:8px;">
           <input type="checkbox" id="autoPullCheckbox" onchange="toggleAutoPull()" checked style="width:18px; height:18px;">
-          <span>15秒ごとに他の端末の最新データを自動で受け取る</span>
+          <span>リアルタイム自動同期（他端末の入力を即時受信）</span>
         </label>
       </div>
 
@@ -1009,14 +1031,49 @@ function saveMatches(arr) { localStorage.setItem('vb_matches', JSON.stringify(ar
 function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
 
 // ============================================================
-// CLOUD SYNC & MULTI-DEVICE REAL-TIME SHARING (合言葉同期)
+// CLOUD SYNC & MULTI-DEVICE REAL-TIME SHARING (ntfy.sh Pub/Sub & SSE)
 // ============================================================
 let syncTimer = null;
-let lastSyncHash = '';
 let isSyncing = false;
+let syncEventSource = null;
+let isSyncConnected = false;
+const myClientId = 'cli_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 7);
 
+// Deterministic topic generator from room name (alphanumeric hash)
+function getSyncTopic(room) {
+  if (!room) return '';
+  let hash = 5381;
+  for (let i = 0; i < room.length; i++) {
+    hash = ((hash << 5) + hash) + room.charCodeAt(i);
+    hash = hash & hash;
+  }
+  const absHash = Math.abs(hash).toString(36);
+  const clean = room.replace(/[^a-zA-Z0-9]/g, '').toLowerCase().slice(0, 10);
+  const prefix = clean ? clean : 'vball';
+  return `vb_${prefix}_${absHash}`;
+}
 
-// URLから合言葉を自動判定して共有リンクを生成
+function getCloudRoom() {
+  return (localStorage.getItem('vb_sync_room') || '').trim();
+}
+
+function getShareUrl(room) {
+  const currentRoom = room || getCloudRoom();
+  if (!currentRoom) return '';
+  let baseUrl = window.location.origin + window.location.pathname;
+
+  if (!baseUrl.startsWith('http')) {
+    let savedGithubUrl = localStorage.getItem('vb_github_pages_url') || '';
+    if (!savedGithubUrl) {
+      savedGithubUrl = 'https://ユーザー名.github.io/volleyball-stats/';
+    }
+    baseUrl = savedGithubUrl;
+  }
+  baseUrl = baseUrl.replace(/\/index\.html$/, '');
+  if (!baseUrl.endsWith('/')) baseUrl += '/';
+  return `${baseUrl}?room=${encodeURIComponent(currentRoom)}`;
+}
+
 function copyShareUrl() {
   let room = getCloudRoom();
   if (!room) {
@@ -1024,17 +1081,11 @@ function copyShareUrl() {
     localStorage.setItem('vb_sync_room', room);
     updateCloudSyncUI();
   }
-  
-  // 現在のベースURLを取得
-  let baseUrl = window.location.origin + window.location.pathname;
-  if (!baseUrl.startsWith('http')) {
-    baseUrl = 'https://volleyball-stats.app/';
-  }
-  const shareUrl = `${baseUrl}?room=${encodeURIComponent(room)}`;
 
+  const shareUrl = getShareUrl(room);
   if (navigator.clipboard && navigator.clipboard.writeText) {
     navigator.clipboard.writeText(shareUrl).then(() => {
-      toast('🔗 共有URLをコピーしました！LINEやメールで仲間に送ってください');
+      toast('📋 共有URLをコピーしました！LINEやメールで仲間に送ってください');
     }).catch(() => {
       copyShareUrlFallback(shareUrl);
     });
@@ -1048,9 +1099,30 @@ function copyShareUrlFallback(url) {
   ta.value = url;
   document.body.appendChild(ta);
   ta.select();
-  document.execCommand('copy');
+  try {
+    document.execCommand('copy');
+    toast('📋 共有URLをコピーしました！LINEやメールで仲間に送ってください');
+  } catch (e) {
+    prompt('以下の共有URLをコピーして仲間に送ってください:', url);
+  }
   document.body.removeChild(ta);
-  toast('🔗 共有URLをコピーしました！LINEやメールで仲間に送ってください');
+}
+
+function triggerNativeShare() {
+  const room = getCloudRoom();
+  const shareUrl = getShareUrl(room);
+  if (!shareUrl) return;
+
+  if (navigator.share) {
+    navigator.share({
+      title: 'バレーボール統計 - 共有ルーム',
+      text: `バレーボール統計の入力ルーム「${room}」に接続します。リアルタイムで入力が共有されます。`,
+      url: shareUrl
+    }).catch(() => {});
+  } else {
+    const lineUrl = `https://line.me/R/msg/text/?${encodeURIComponent('🏐 バレーボール統計の共有ルーム: ' + shareUrl)}`;
+    window.open(lineUrl, '_blank');
+  }
 }
 
 function checkUrlParamsForRoom() {
@@ -1063,13 +1135,11 @@ function checkUrlParamsForRoom() {
         localStorage.setItem('vb_sync_room', roomParam);
         updateCloudSyncUI();
         toast(`🔗 共有ルーム [${roomParam}] に自動接続しました！`);
+        connectSyncStream();
+        syncPullFromCloud(true);
       }
     }
   } catch (e) {}
-}
-
-function getCloudRoom() {
-  return (localStorage.getItem('vb_sync_room') || '').trim();
 }
 
 function openCloudSyncModal() {
@@ -1078,26 +1148,37 @@ function openCloudSyncModal() {
   updateCloudSyncUI();
   document.getElementById('cloudSyncModal').classList.remove('hidden');
 }
+
 function closeCloudSyncModal() {
   document.getElementById('cloudSyncModal').classList.add('hidden');
 }
 
-function updateCloudSyncUI() {
+function updateCloudSyncUI(connectedState) {
   const room = getCloudRoom();
   const statusCard = document.getElementById('syncStatusCard');
   const statusTitle = document.getElementById('syncStatusTitle');
   const statusDesc = document.getElementById('syncStatusDesc');
   const homeBtn = document.getElementById('homeSyncBtn');
   const inputBtn = document.getElementById('inputSyncBtn');
+  const shareUrlDisplay = document.getElementById('shareUrlDisplay');
+  const nativeShareBtn = document.getElementById('nativeShareBtn');
+
+  if (shareUrlDisplay) {
+    shareUrlDisplay.value = room ? getShareUrl(room) : '';
+  }
+  if (nativeShareBtn) {
+    nativeShareBtn.style.display = room ? 'block' : 'none';
+  }
 
   if (room) {
+    const isConn = (connectedState !== undefined) ? connectedState : isSyncConnected;
     if (statusCard) {
-      statusCard.style.background = '#E8F5E9';
-      statusCard.style.borderColor = '#81C784';
-      statusTitle.textContent = `🟢 同期中: [ ${room} ]`;
-      statusTitle.style.color = '#1B5E20';
-      const lastTime = localStorage.getItem('vb_last_sync_time') || '未実行';
-      statusDesc.textContent = `最終同期: ${lastTime} (全端末でリアルタイム共有中)`;
+      statusCard.style.background = isConn ? '#E8F5E9' : '#FFF8E1';
+      statusCard.style.borderColor = isConn ? '#81C784' : '#FFE082';
+      statusTitle.textContent = isConn ? `🟢 リアルタイム通信中: [ ${room} ]` : `🟡 接続待機中: [ ${room} ]`;
+      statusTitle.style.color = isConn ? '#1B5E20' : '#E65100';
+      const lastTime = localStorage.getItem('vb_last_sync_time') || '接続中';
+      statusDesc.textContent = `全端末でリアルタイム共有中 (最新同期: ${lastTime})`;
     }
     if (homeBtn) {
       homeBtn.textContent = `☁️ 同期中`;
@@ -1110,8 +1191,8 @@ function updateCloudSyncUI() {
       homeBadge.style.background = '#A5D6A7';
     }
     if (homeSub) {
-      const lastTime = localStorage.getItem('vb_last_sync_time') || '同期済み';
-      homeSub.textContent = `全端末で共有中 (最終: ${lastTime})`;
+      const lastTime = localStorage.getItem('vb_last_sync_time') || '接続完了';
+      homeSub.textContent = `全端末で共有中 (最新: ${lastTime})`;
     }
     if (inputBtn) {
       inputBtn.textContent = `☁️●`;
@@ -1123,7 +1204,7 @@ function updateCloudSyncUI() {
       statusCard.style.borderColor = '#DCE2E8';
       statusTitle.textContent = '⚪ クラウド同期: 未設定';
       statusTitle.style.color = '#616161';
-      statusDesc.textContent = 'チームで決めた「合言葉」を入力すると複数端末で自動共有されます';
+      statusDesc.textContent = 'チームで決めた「合言葉」を入力するか、共有URLを開くと自動で同期されます';
     }
     if (homeBtn) {
       homeBtn.textContent = '☁️ 共有同期';
@@ -1154,11 +1235,10 @@ function saveCloudRoom() {
   }
   localStorage.setItem('vb_sync_room', room);
   updateCloudSyncUI();
-  toast(`合言葉 [${room}] を設定しました！最新データを取得中...`);
-  syncPullFromCloud().then(hasData => {
-    if (!hasData) {
-      syncPushToCloud(false);
-    }
+  toast(`合言葉 [${room}] を設定しました！最新データを同期中...`);
+  connectSyncStream();
+  syncPullFromCloud().then(() => {
+    syncPushToCloud(true);
   });
   startAutoSyncLoop();
 }
@@ -1166,6 +1246,11 @@ function saveCloudRoom() {
 function clearCloudRoom() {
   if (!confirm('合言葉の同期を解除しますか？（端末内のデータは消えません）')) return;
   localStorage.removeItem('vb_sync_room');
+  if (syncEventSource) {
+    try { syncEventSource.close(); } catch (e) {}
+    syncEventSource = null;
+  }
+  isSyncConnected = false;
   updateCloudSyncUI();
   if (syncTimer) clearInterval(syncTimer);
   toast('同期をオフにしました');
@@ -1182,52 +1267,317 @@ function isAutoSyncOn() {
 function toggleAutoPull() {
   const chk = document.getElementById('autoPullCheckbox');
   localStorage.setItem('vb_auto_pull', chk.checked ? '1' : '0');
-  startAutoSyncLoop();
+  if (chk.checked) {
+    connectSyncStream();
+    startAutoSyncLoop();
+  } else {
+    if (syncEventSource) {
+      try { syncEventSource.close(); } catch (e) {}
+      syncEventSource = null;
+    }
+    if (syncTimer) clearInterval(syncTimer);
+  }
 }
 function isAutoPullOn() {
   return localStorage.getItem('vb_auto_pull') !== '0';
 }
 
-function getRoomCloudUrl(room) {
-  let safeRoom = '';
-  for (let i = 0; i < room.length; i++) {
-    const code = room.charCodeAt(i);
-    safeRoom += code.toString(16);
+// ------------------------------------------------------------
+// Real-time EventSource Stream Connection
+// ------------------------------------------------------------
+function connectSyncStream() {
+  const room = getCloudRoom();
+  if (!room || !isAutoPullOn()) return;
+  const topic = getSyncTopic(room);
+  if (!topic) return;
+
+  if (syncEventSource) {
+    try { syncEventSource.close(); } catch (e) {}
+    syncEventSource = null;
   }
-  return `https://kvdb.io/4y9nNxC8dZ6vK7wB3q5L8P/vb_${safeRoom}`;
+
+  try {
+    syncEventSource = new EventSource(`https://ntfy.sh/${topic}/sse`);
+    syncEventSource.onopen = () => {
+      isSyncConnected = true;
+      updateCloudSyncUI(true);
+    };
+    syncEventSource.onerror = () => {
+      isSyncConnected = false;
+      updateCloudSyncUI(false);
+    };
+    syncEventSource.onmessage = (event) => {
+      try {
+        const ntfyMsg = JSON.parse(event.data);
+        if (ntfyMsg.event === 'message') {
+          handleIncomingNtfyMessage(ntfyMsg, false);
+        }
+      } catch (e) {}
+    };
+  } catch (e) {
+    console.warn('EventSource failed to connect:', e);
+  }
 }
 
+// ------------------------------------------------------------
+// Incoming Message Dispatcher & Handlers
+// ------------------------------------------------------------
+function handleIncomingNtfyMessage(ntfyMsg, isReplay) {
+  // Check if attachment exists (snapshot file)
+  if (ntfyMsg.attachment && ntfyMsg.attachment.url) {
+    fetch(ntfyMsg.attachment.url)
+      .then(res => res.json())
+      .then(data => applyRemoteSnapshot(data))
+      .catch(() => {});
+    return;
+  }
+
+  if (!ntfyMsg.message) return;
+  let data;
+  try {
+    data = JSON.parse(ntfyMsg.message);
+  } catch (e) {
+    return;
+  }
+
+  // Ignore our own echo
+  if (data.sender === myClientId) return;
+
+  if (data.type === 'action') {
+    if (data.action === 'add_record') {
+      applyRemoteAddRecord(data.matchId, data.record, isReplay);
+    } else if (data.action === 'del_record') {
+      applyRemoteDelRecord(data.matchId, data.recordId);
+    } else if (data.action === 'edit_record') {
+      applyRemoteEditRecord(data.matchId, data.record);
+    } else if (data.action === 'court_sub') {
+      applyRemoteCourtSub(data.matchId, data.courtPlayers);
+    } else if (data.action === 'req_state') {
+      // Peer requested state
+      syncPushToCloud(true);
+    }
+  } else if (data.type === 'state_snapshot') {
+    applyRemoteSnapshot(data);
+  }
+}
+
+function applyRemoteAddRecord(matchId, rec, isReplay) {
+  if (!rec || !rec.id) return;
+  const matches = loadMatches();
+  const match = matches.find(m => m.id === matchId);
+  if (!match) {
+    syncPullFromCloud(true);
+    return;
+  }
+  if (!match.records) match.records = [];
+  if (match.records.some(r => r.id === rec.id)) return;
+
+  match.records.push(rec);
+  match.records.sort((a,b) => (a.ts || 0) - (b.ts || 0));
+  saveMatches(matches);
+
+  refreshActiveViews(rec, 'add');
+  if (!isReplay && currentMatchId === matchId) {
+    const catLabel = rec.cat === 'serve' ? 'サーブ' : rec.cat === 'receive' ? 'レセプション' : rec.cat === 'toss' ? 'トス' : 'スパイク';
+    const valLabel = formatVal(rec.cat, rec.val);
+    toast(`📥 共有: [S${rec.set || 1}] ${rec.player} / ${catLabel} [${valLabel}]`);
+  }
+}
+
+function applyRemoteDelRecord(matchId, recordId) {
+  if (!recordId) return;
+  const matches = loadMatches();
+  const match = matches.find(m => m.id === matchId);
+  if (!match || !match.records) return;
+  const idx = match.records.findIndex(r => r.id === recordId);
+  if (idx < 0) return;
+  match.records.splice(idx, 1);
+  saveMatches(matches);
+  refreshActiveViews(null, 'del');
+}
+
+function applyRemoteEditRecord(matchId, rec) {
+  if (!rec || !rec.id) return;
+  const matches = loadMatches();
+  const match = matches.find(m => m.id === matchId);
+  if (!match || !match.records) return;
+  const idx = match.records.findIndex(r => r.id === rec.id);
+  if (idx < 0) {
+    match.records.push(rec);
+  } else {
+    match.records[idx] = Object.assign({}, match.records[idx], rec);
+  }
+  match.records.sort((a,b) => (a.ts || 0) - (b.ts || 0));
+  saveMatches(matches);
+  refreshActiveViews(rec, 'edit');
+}
+
+function applyRemoteCourtSub(matchId, courtPlayers) {
+  if (!courtPlayers) return;
+  const matches = loadMatches();
+  const match = matches.find(m => m.id === matchId);
+  if (!match) return;
+  match.courtPlayers = Object.assign({}, match.courtPlayers, courtPlayers);
+  saveMatches(matches);
+  if (currentMatchId === matchId) {
+    renderPlayerBtns();
+  }
+}
+
+function applyRemoteSnapshot(payload) {
+  if (!payload) return;
+  let hasChanged = false;
+
+  // Merge players
+  if (Array.isArray(payload.players) && payload.players.length > 0) {
+    let currentPlayers = loadPlayers();
+    const set = new Set(currentPlayers);
+    let addedPlayer = false;
+    payload.players.forEach(p => {
+      if (p && !set.has(p)) {
+        currentPlayers.push(p);
+        set.add(p);
+        addedPlayer = true;
+      }
+    });
+    if (addedPlayer) {
+      savePlayers(currentPlayers);
+      hasChanged = true;
+    }
+  }
+
+  // Merge matches
+  if (Array.isArray(payload.matches) && payload.matches.length > 0) {
+    let currentMatches = loadMatches();
+    payload.matches.forEach(inM => {
+      const localM = currentMatches.find(m => m.id === inM.id);
+      if (!localM) {
+        currentMatches.push(inM);
+        hasChanged = true;
+      } else {
+        if (!localM.records) localM.records = [];
+        const existingIds = new Set(localM.records.map(r => r.id));
+        let newRec = false;
+        (inM.records || []).forEach(r => {
+          if (r && r.id && !existingIds.has(r.id)) {
+            localM.records.push(r);
+            existingIds.add(r.id);
+            newRec = true;
+          }
+        });
+        if (newRec) {
+          localM.records.sort((a,b) => (a.ts || 0) - (b.ts || 0));
+          hasChanged = true;
+        }
+        if (inM.courtPlayers) {
+          localM.courtPlayers = Object.assign({}, localM.courtPlayers, inM.courtPlayers);
+          hasChanged = true;
+        }
+      }
+    });
+    if (hasChanged) {
+      saveMatches(currentMatches);
+    }
+  }
+
+  if (hasChanged) {
+    refreshActiveViews(null, 'snapshot');
+  }
+}
+
+function refreshActiveViews(lastRec, actionType) {
+  const timeStr = new Date().toLocaleTimeString('ja-JP', { hour:'2-digit', minute:'2-digit', second:'2-digit' });
+  localStorage.setItem('vb_last_sync_time', timeStr);
+  updateCloudSyncUI();
+
+  if (currentMatchId) {
+    if (lastRec) {
+      updateUndoBar(lastRec);
+    } else {
+      updateUndoBar();
+    }
+    const statsSc = document.getElementById('statsScreen');
+    if (statsSc && !statsSc.classList.contains('hidden')) {
+      renderStats();
+    }
+    const logsModal = document.getElementById('logsModal');
+    if (logsModal && !logsModal.classList.contains('hidden')) {
+      renderLogsList();
+    }
+  } else {
+    renderMatchList();
+  }
+}
+
+// ------------------------------------------------------------
+// Broadcast Real-time Action via ntfy
+// ------------------------------------------------------------
+async function broadcastSyncAction(actionObj) {
+  const room = getCloudRoom();
+  if (!room || !isAutoSyncOn()) return;
+  const topic = getSyncTopic(room);
+  if (!topic) return;
+
+  actionObj.sender = myClientId;
+  actionObj.time = Date.now();
+
+  try {
+    await fetch(`https://ntfy.sh/${topic}`, {
+      method: 'POST',
+      body: JSON.stringify(actionObj),
+      headers: { 'Title': 'vb_action' }
+    });
+    const timeStr = new Date().toLocaleTimeString('ja-JP', { hour:'2-digit', minute:'2-digit', second:'2-digit' });
+    localStorage.setItem('vb_last_sync_time', timeStr);
+    updateCloudSyncUI();
+  } catch (e) {
+    console.warn('Action broadcast failed:', e);
+  }
+}
+
+// ------------------------------------------------------------
+// Push & Pull Full State via ntfy
+// ------------------------------------------------------------
 async function syncPushToCloud(isSilent = false) {
   const room = getCloudRoom();
   if (!room || isSyncing) return;
+  const topic = getSyncTopic(room);
+  if (!topic) return;
   isSyncing = true;
 
   try {
     const players = loadPlayers();
     const matches = loadMatches();
     const payload = {
-      version: '1.0',
-      room: room,
-      updatedAt: Date.now(),
+      type: 'state_snapshot',
+      sender: myClientId,
+      time: Date.now(),
       players: players,
       matches: matches
     };
     const jsonStr = JSON.stringify(payload);
-    lastSyncHash = jsonStr;
 
-    const url = getRoomCloudUrl(room);
-    const res = await fetch(url, {
-      method: 'POST',
-      body: jsonStr,
-      headers: { 'Content-Type': 'application/json' }
-    });
-
-    if (res.ok) {
-      const timeStr = new Date().toLocaleTimeString('ja-JP', { hour:'2-digit', minute:'2-digit', second:'2-digit' });
-      localStorage.setItem('vb_last_sync_time', timeStr);
-      updateCloudSyncUI();
-      if (!isSilent) toast('☁️ クラウドへデータを保存しました！');
+    if (jsonStr.length < 3500) {
+      await fetch(`https://ntfy.sh/${topic}`, {
+        method: 'POST',
+        body: jsonStr,
+        headers: { 'Title': 'vb_snapshot' }
+      });
+    } else {
+      await fetch(`https://ntfy.sh/${topic}`, {
+        method: 'PUT',
+        body: jsonStr,
+        headers: {
+          'Filename': 'vb_snapshot.json',
+          'Title': 'vb_snapshot'
+        }
+      });
     }
+
+    const timeStr = new Date().toLocaleTimeString('ja-JP', { hour:'2-digit', minute:'2-digit', second:'2-digit' });
+    localStorage.setItem('vb_last_sync_time', timeStr);
+    updateCloudSyncUI();
+    if (!isSilent) toast('☁️ クラウドへデータを保存しました！');
   } catch (err) {
     if (!isSilent) toast('クラウドへの保存に失敗しました');
   } finally {
@@ -1237,86 +1587,38 @@ async function syncPushToCloud(isSilent = false) {
 
 async function syncPullFromCloud(isSilent = false) {
   const room = getCloudRoom();
-  if (!room || isSyncing) return false;
-  isSyncing = true;
+  if (!room) return false;
+  const topic = getSyncTopic(room);
+  if (!topic) return false;
 
   try {
-    const url = getRoomCloudUrl(room);
-    const res = await fetch(url + '?_t=' + Date.now());
-    if (res.status === 404) return false;
+    const res = await fetch(`https://ntfy.sh/${topic}/json?poll=1&since=all`);
     if (!res.ok) return false;
-
     const text = await res.text();
-    if (!text || text === lastSyncHash) return true;
-    lastSyncHash = text;
-
-    const cloudData = JSON.parse(text);
-    if (!cloudData || (!cloudData.players && !cloudData.matches)) return false;
-
-    let localPlayers = loadPlayers();
-    if (Array.isArray(cloudData.players)) {
-      cloudData.players.forEach(p => {
-        if (!localPlayers.includes(p)) localPlayers.push(p);
-      });
-      savePlayers(localPlayers);
-    }
-
-    let localMatches = loadMatches();
-    let hasChanged = false;
-    if (Array.isArray(cloudData.matches)) {
-      cloudData.matches.forEach(cloudM => {
-        const localM = localMatches.find(m => m.id === cloudM.id);
-        if (!localM) {
-          localMatches.push(cloudM);
-          hasChanged = true;
-        } else {
-          if (!localM.records) localM.records = [];
-          if (cloudM.records && Array.isArray(cloudM.records)) {
-            const localRecIds = new Set(localM.records.map(r => r.id));
-            let newRecs = false;
-            cloudM.records.forEach(cr => {
-              if (!localRecIds.has(cr.id)) {
-                localM.records.push(cr);
-                newRecs = true;
-                hasChanged = true;
-              }
-            });
-            if (newRecs) {
-              localM.records.sort((a,b) => (a.ts || 0) - (b.ts || 0));
-            }
+    if (text) {
+      const lines = text.trim().split('\n');
+      for (const line of lines) {
+        if (!line.trim()) continue;
+        try {
+          const msg = JSON.parse(line);
+          if (msg.event === 'message') {
+            handleIncomingNtfyMessage(msg, true);
           }
-          if (cloudM.courtPlayers) {
-            localM.courtPlayers = Object.assign({}, localM.courtPlayers, cloudM.courtPlayers);
-          }
-        }
-      });
-      if (hasChanged) {
-        saveMatches(localMatches);
+        } catch (e) {}
       }
     }
+
+    // Also broadcast request for live state to any connected peers
+    broadcastSyncAction({ type: 'action', action: 'req_state' });
 
     const timeStr = new Date().toLocaleTimeString('ja-JP', { hour:'2-digit', minute:'2-digit', second:'2-digit' });
     localStorage.setItem('vb_last_sync_time', timeStr);
     updateCloudSyncUI();
-
-    if (hasChanged) {
-      if (currentMatchId) {
-        renderPlayerBtns();
-        updateUndoBar();
-        const statsSc = document.getElementById('statsScreen');
-        if (statsSc && !statsSc.classList.contains('hidden')) {
-          renderStats();
-        }
-      } else {
-        renderMatchList();
-      }
-      if (!isSilent) toast('🔄 最新の共有データを同期しました！');
-    }
+    if (!isSilent) toast('🔄 最新の共有データを同期しました！');
     return true;
-  } catch (err) {
+  } catch (e) {
+    if (!isSilent) toast('最新データの取得に失敗しました');
     return false;
-  } finally {
-    isSyncing = false;
   }
 }
 
@@ -1328,22 +1630,30 @@ function startAutoSyncLoop() {
   const room = getCloudRoom();
   if (!room) return;
 
+  // Background health check & poll every 15s
   syncTimer = setInterval(() => {
     if (isAutoPullOn()) {
+      if (!syncEventSource || syncEventSource.readyState === 2) {
+        connectSyncStream();
+      }
       syncPullFromCloud(true);
     }
-  }, 12000);
+  }, 15000);
 }
 
-function triggerAutoPushAfterRecord() {
-  const room = getCloudRoom();
-  if (room && isAutoSyncOn()) {
-    clearTimeout(window._pushDebounce);
-    window._pushDebounce = setTimeout(() => {
-      syncPushToCloud(true);
-    }, 600);
+// Background auto reconnection on visibility / focus change (iOS Safari sleep recovery)
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden && getCloudRoom()) {
+    connectSyncStream();
+    syncPullFromCloud(true);
   }
-}
+});
+window.addEventListener('focus', () => {
+  if (getCloudRoom()) {
+    connectSyncStream();
+    syncPullFromCloud(true);
+  }
+});
 
 // ============================================================
 // DATA BACKUP & TRANSFER (ファイル移行機能)
@@ -1505,11 +1815,10 @@ function goHome() {
   selectedPlayer = null;
   renderMatchList();
   showScreen('homeScreen');
-    // Check URL params for auto room join (?room=...)
   checkUrlParamsForRoom();
-  // Initialize Cloud Sync if room is configured
   updateCloudSyncUI();
   if (getCloudRoom()) {
+    connectSyncStream();
     syncPullFromCloud(true);
     startAutoSyncLoop();
   }
@@ -1592,6 +1901,7 @@ function createMatch() {
   saveMatches(ms);
   closeNewMatch();
   openMatch(m.id);
+  syncPushToCloud(true);
 }
 
 function askDeleteMatch(id, name) {
@@ -1607,6 +1917,7 @@ function confirmDeleteMatch() {
   closeDeleteMatch();
   renderMatchList();
   toast('試合を削除しました');
+  syncPushToCloud(true);
 }
 
 // ============================================================
@@ -1725,6 +2036,7 @@ function saveSubstituteMembers() {
   showAllPlayersMode = false;
   renderPlayerBtns();
   toast(`第${currentSet}セットのメンバーを変更しました (${selected.length}名)`);
+  broadcastSyncAction({ type: 'action', action: 'court_sub', matchId: match.id, courtPlayers: match.courtPlayers });
 }
 
 // ============================================================
@@ -1732,7 +2044,7 @@ function saveSubstituteMembers() {
 // ============================================================
 function switchCat(cat) {
   currentCat = cat || 'serve';
-  const targetId = cat === 'serve' ? 'secServe' : cat === 'receive' ? 'secReceive' : 'secSpike';
+  const targetId = cat === 'serve' ? 'secServe' : cat === 'receive' ? 'secReceive' : cat === 'toss' ? 'secToss' : 'secSpike';
   const el = document.getElementById(targetId);
   if (el) el.scrollIntoView({ behavior: 'smooth' });
 }
@@ -1756,10 +2068,10 @@ function recordAction(cat, val) {
 
   updateUndoBar(rec);
 
-  const catLabel = cat === 'serve' ? 'サーブ' : cat === 'receive' ? 'レセプション' : 'スパイク';
+  const catLabel = cat === 'serve' ? 'サーブ' : cat === 'receive' ? 'レセプション' : cat === 'toss' ? 'トス' : 'スパイク';
   const valLabel = formatVal(cat, val);
   toast(`[S${currentSet}] ${selectedPlayer}：${catLabel} [${valLabel}]`);
-  triggerAutoPushAfterRecord();
+  broadcastSyncAction({ type: 'action', action: 'add_record', matchId: match.id, record: rec });
 }
 
 function formatVal(cat, val) {
@@ -1783,7 +2095,7 @@ function updateUndoBar(rec) {
     return;
   }
   const last = rec || match.records[match.records.length - 1];
-  const catLabel = last.cat === 'serve' ? 'サーブ' : last.cat === 'receive' ? 'レセプション' : 'スパイク';
+  const catLabel = last.cat === 'serve' ? 'サーブ' : last.cat === 'receive' ? 'レセプション' : last.cat === 'toss' ? 'トス' : 'スパイク';
   const valLabel = formatVal(last.cat, last.val);
   el.textContent = `直前: [S${last.set || 1}] ${last.player} / ${catLabel} [${valLabel}]`;
 }
@@ -1798,6 +2110,7 @@ function undoLast() {
   updateMatch(match);
   updateUndoBar();
   toast(`取り消しました: ${popped.player} [${formatVal(popped.cat, popped.val)}]`);
+  broadcastSyncAction({ type: 'action', action: 'del_record', matchId: match.id, recordId: popped.id });
 }
 
 // 全履歴モーダル
@@ -1830,7 +2143,7 @@ function renderLogsList() {
   const reversed = [...records].reverse();
   container.innerHTML = reversed.map(r => {
     const time = new Date(r.ts).toLocaleTimeString('ja-JP', { hour:'2-digit', minute:'2-digit', second:'2-digit' });
-    const catLabel = r.cat === 'serve' ? 'サーブ' : r.cat === 'receive' ? 'レセプション' : 'スパイク';
+    const catLabel = r.cat === 'serve' ? 'サーブ' : r.cat === 'receive' ? 'レセプション' : r.cat === 'toss' ? 'トス' : 'スパイク';
     const valLabel = formatVal(r.cat, r.val);
     return `
       <div class="log-item">
@@ -1858,8 +2171,8 @@ function deleteSingleRecord(id) {
   updateMatch(match);
   updateUndoBar();
   renderLogsList();
-  triggerAutoPushAfterRecord();
   toast(`削除しました: ${item.player} [${formatVal(item.cat, item.val)}]`);
+  broadcastSyncAction({ type: 'action', action: 'del_record', matchId: match.id, recordId: id });
 }
 
 // レコード編集モーダル
@@ -1897,12 +2210,20 @@ function updateEditValOptions(currentVal) {
       { val: 'miss', text: '失点 (ミス)' },
       { val: 'shut', text: 'シャット (被ブロック)' }
     ];
+  } else if (cat === 'toss') {
+    options = [
+      { val: 'A', text: 'A (完璧)' },
+      { val: 'B', text: 'B (良い)' },
+      { val: 'C', text: 'C (強打打てない)' },
+      { val: 'D', text: 'D (スタンディング)' },
+      { val: 'M', text: 'M (トスミス)' }
+    ];
   } else {
     options = [
       { val: 'A', text: 'A (完璧)' },
       { val: 'B', text: 'B (良い)' },
-      { val: 'C', text: 'C (普通/2段)' },
-      { val: 'D', text: 'D (悪い)' },
+      { val: 'C', text: 'C (普通/乱れ)' },
+      { val: 'D', text: 'D (チャンス返球)' },
       { val: 'M', text: 'M (ミス/エース)' }
     ];
   }
@@ -1926,8 +2247,8 @@ function saveRecordEdit() {
   updateUndoBar();
   closeEditRecordModal();
   renderLogsList();
-  triggerAutoPushAfterRecord();
   toast('記録を変更しました');
+  broadcastSyncAction({ type: 'action', action: 'edit_record', matchId: match.id, record: match.records[idx] });
 }
 
 // ============================================================
@@ -2298,6 +2619,7 @@ function renderStats() {
   container.innerHTML = `
     ${renderServeTableIdentical(activeSet, 'serve', 'サーブ効果率')}
     ${renderServeTableIdentical(activeSet, 'receive', 'レセプション')}
+    ${renderServeTableIdentical(activeSet, 'toss', 'トス')}
     ${renderSpikeTableIdentical(activeSet)}
   `;
 }
@@ -2505,6 +2827,7 @@ function copyForSpreadsheet() {
 
   buildTsvSection('サーブ効果率', 'serve', false);
   buildTsvSection('レセプション', 'receive', false);
+  buildTsvSection('トス', 'toss', false);
   buildTsvSection('スパイク', 'spike', true);
 
   if (navigator.clipboard && window.ClipboardItem) {
@@ -2583,6 +2906,7 @@ function exportCSV() {
 
   addIdenticalSection('サーブ効果率', 'serve', false);
   addIdenticalSection('レセプション', 'receive', false);
+  addIdenticalSection('トス', 'toss', false);
   addIdenticalSection('スパイク', 'spike', true);
 
   const bom = '\uFEFF';
@@ -2635,6 +2959,7 @@ function addPlayer() {
   input.value = '';
   renderPlayerManageList();
   toast(`${name} を登録しました`);
+  syncPushToCloud(true);
 }
 function deletePlayer(idx) {
   const players = loadPlayers();
@@ -2643,6 +2968,7 @@ function deletePlayer(idx) {
   savePlayers(players);
   renderPlayerManageList();
   toast(`${name} を削除しました`);
+  syncPushToCloud(true);
 }
 
 // ============================================================
@@ -2664,11 +2990,12 @@ function esc(s) {
   }
   renderMatchList();
   showScreen('homeScreen');
-    // Check URL params for auto room join (?room=...)
+  // Check URL params for auto room join (?room=...)
   checkUrlParamsForRoom();
   // Initialize Cloud Sync if room is configured
   updateCloudSyncUI();
   if (getCloudRoom()) {
+    connectSyncStream();
     syncPullFromCloud(true);
     startAutoSyncLoop();
   }
