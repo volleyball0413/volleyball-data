@@ -580,11 +580,11 @@
     <button class="header-btn" onclick="showStats()">集計 📊</button>
   </div>
 
-  <!-- Category Tabs -->
-  <div class="tabs">
-    <button class="tab-btn active" id="tabServe" onclick="switchCat('serve')">サーブ効果率</button>
-    <button class="tab-btn" id="tabReceive" onclick="switchCat('receive')">レセプション</button>
-    <button class="tab-btn" id="tabSpike" onclick="switchCat('spike')">スパイク</button>
+  <!-- Quick Jump Anchors -->
+  <div style="display:flex; background:#fff; border-bottom:1px solid var(--border); padding:6px 12px; gap:8px; overflow-x:auto;">
+    <button class="btn btn-outline btn-sm" style="flex:1; padding:5px 4px; font-size:0.8rem;" onclick="document.getElementById('secServe').scrollIntoView({behavior:'smooth'})">🏐 サーブへ</button>
+    <button class="btn btn-outline btn-sm" style="flex:1; padding:5px 4px; font-size:0.8rem;" onclick="document.getElementById('secReceive').scrollIntoView({behavior:'smooth'})">🛡️ レセプションへ</button>
+    <button class="btn btn-outline btn-sm" style="flex:1; padding:5px 4px; font-size:0.8rem;" onclick="document.getElementById('secSpike').scrollIntoView({behavior:'smooth'})">💥 スパイクへ</button>
   </div>
 
   <!-- Set Selector -->
@@ -612,53 +612,49 @@
       </div>
       <div class="players-grid" id="playerBtns"></div>
 
-      <!-- Action: Serve -->
-      <div id="inputServe">
-        <div style="font-size:0.82rem; font-weight:700; color:var(--text2); margin-top:8px;">
-          サーブ結果（相手レセプションの質）
+      <!-- 3項目同時表示エリア -->
+
+      <!-- 1. サーブ効果率 -->
+      <div id="secServe" style="background:#fff; border:1px solid #DCE2E8; border-radius:12px; padding:10px 12px; margin-bottom:12px; box-shadow:0 1px 4px rgba(0,0,0,0.04);">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+          <span style="font-size:0.88rem; font-weight:800; color:#1565C0;">🏐 サーブ効果率 (相手レセプションの質)</span>
+          <span style="font-size:0.72rem; color:#757575;">M=直接得点</span>
         </div>
         <div class="action-grid action-grid-serve">
-          <button class="action-btn btn-A" onclick="recordAction('serve','A')">A<span class="btn-label">完璧返球</span></button>
-          <button class="action-btn btn-B" onclick="recordAction('serve','B')">B<span class="btn-label">良い返球</span></button>
-          <button class="action-btn btn-C" onclick="recordAction('serve','C')">C<span class="btn-label">乱れ(2段)</span></button>
-          <button class="action-btn btn-D" onclick="recordAction('serve','D')">D<span class="btn-label">チャンス返球</span></button>
-          <button class="action-btn btn-M" onclick="recordAction('serve','M')">M<span class="btn-label">エース/直接得点</span></button>
-        </div>
-        <div class="notice-box">
-          💡 A=返球完璧、B=トス上げ可、C=2段トス、D=攻撃限定、M=サービスエース（即得点）
+          <button class="action-btn btn-A" onclick="recordAction('serve','A')">A<span class="btn-label">完璧</span></button>
+          <button class="action-btn btn-B" onclick="recordAction('serve','B')">B<span class="btn-label">良い</span></button>
+          <button class="action-btn btn-C" onclick="recordAction('serve','C')">C<span class="btn-label">乱れ</span></button>
+          <button class="action-btn btn-D" onclick="recordAction('serve','D')">D<span class="btn-label">チャンス</span></button>
+          <button class="action-btn btn-M" onclick="recordAction('serve','M')">M<span class="btn-label">エース</span></button>
         </div>
       </div>
 
-      <!-- Action: Reception -->
-      <div id="inputReceive" class="hidden">
-        <div style="font-size:0.82rem; font-weight:700; color:var(--text2); margin-top:8px;">
-          レセプション結果（味方の返球の質）
+      <!-- 2. レセプション -->
+      <div id="secReceive" style="background:#fff; border:1px solid #DCE2E8; border-radius:12px; padding:10px 12px; margin-bottom:12px; box-shadow:0 1px 4px rgba(0,0,0,0.04);">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+          <span style="font-size:0.88rem; font-weight:800; color:#00796B;">🛡️ レセプション (味方返球の質)</span>
+          <span style="font-size:0.72rem; color:#757575;">M=被エース</span>
         </div>
         <div class="action-grid action-grid-serve">
-          <button class="action-btn btn-A" onclick="recordAction('receive','A')">A<span class="btn-label">完璧返球</span></button>
-          <button class="action-btn btn-B" onclick="recordAction('receive','B')">B<span class="btn-label">良い返球</span></button>
-          <button class="action-btn btn-C" onclick="recordAction('receive','C')">C<span class="btn-label">乱れ(2段)</span></button>
-          <button class="action-btn btn-D" onclick="recordAction('receive','D')">D<span class="btn-label">チャンス返球</span></button>
-          <button class="action-btn btn-M" onclick="recordAction('receive','M')">M<span class="btn-label">即ミス(被エース)</span></button>
-        </div>
-        <div class="notice-box">
-          💡 A=セッター定位置、B=セッター移動、C=セッター以外が2段、D=返すだけ、M=直接失点
+          <button class="action-btn btn-A" onclick="recordAction('receive','A')">A<span class="btn-label">完璧</span></button>
+          <button class="action-btn btn-B" onclick="recordAction('receive','B')">B<span class="btn-label">良い</span></button>
+          <button class="action-btn btn-C" onclick="recordAction('receive','C')">C<span class="btn-label">乱れ</span></button>
+          <button class="action-btn btn-D" onclick="recordAction('receive','D')">D<span class="btn-label">チャンス</span></button>
+          <button class="action-btn btn-M" onclick="recordAction('receive','M')">M<span class="btn-label">ミス失点</span></button>
         </div>
       </div>
 
-      <!-- Action: Spike -->
-      <div id="inputSpike" class="hidden">
-        <div style="font-size:0.82rem; font-weight:700; color:var(--text2); margin-top:8px;">
-          スパイク結果
+      <!-- 3. スパイク -->
+      <div id="secSpike" style="background:#fff; border:1px solid #DCE2E8; border-radius:12px; padding:10px 12px; margin-bottom:12px; box-shadow:0 1px 4px rgba(0,0,0,0.04);">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+          <span style="font-size:0.88rem; font-weight:800; color:#E65100;">💥 スパイク</span>
+          <span style="font-size:0.72rem; color:#757575;">継続=ラリー継続</span>
         </div>
         <div class="action-grid action-grid-spike">
           <button class="action-btn btn-point" onclick="recordAction('spike','point')">得点<span class="btn-label">決定</span></button>
-          <button class="action-btn btn-continue" onclick="recordAction('spike','continue')">継続<span class="btn-label">相手拾い/返球</span></button>
-          <button class="action-btn btn-miss" onclick="recordAction('spike','miss')">失点<span class="btn-label">アウト/ネット</span></button>
+          <button class="action-btn btn-continue" onclick="recordAction('spike','continue')">継続<span class="btn-label">相手拾い</span></button>
+          <button class="action-btn btn-miss" onclick="recordAction('spike','miss')">失点<span class="btn-label">ミス</span></button>
           <button class="action-btn btn-shut" onclick="recordAction('spike','shut')">シャット<span class="btn-label">被ブロック</span></button>
-        </div>
-        <div class="notice-box">
-          💡 「継続」は決まらなかったが相手に拾われた・ラリーが続いた打数です（総本数に算入）。
         </div>
       </div>
 
@@ -955,6 +951,15 @@
       </div>
 
       <!-- Action Buttons -->
+            <!-- Action Buttons -->
+      <div style="margin-bottom:12px;">
+        <button class="btn btn-primary btn-md btn-block" onclick="copyShareUrl()" style="font-size:0.95rem; padding:12px;">
+          🔗 この共有URLをコピー（LINE等で送るだけ！）
+        </button>
+        <span style="font-size:0.75rem; color:#616161; display:block; margin-top:4px; text-align:center;">
+          ※このURLを開いた端末同士は、何もしなくても自動で同じデータになります
+        </span>
+      </div>
       <div style="display:flex; gap:8px; margin-top:14px; flex-wrap:wrap;">
         <button class="btn btn-teal btn-md" style="flex:1;" onclick="manualPushCloud()">☁️ 今すぐクラウドへ保存</button>
         <button class="btn btn-outline btn-md" style="flex:1;" onclick="manualPullCloud()">🔄 クラウドから最新取得</button>
@@ -1009,6 +1014,59 @@ function uid() { return Date.now().toString(36) + Math.random().toString(36).sli
 let syncTimer = null;
 let lastSyncHash = '';
 let isSyncing = false;
+
+
+// URLから合言葉を自動判定して共有リンクを生成
+function copyShareUrl() {
+  let room = getCloudRoom();
+  if (!room) {
+    room = 'team_' + Math.random().toString(36).substring(2, 7);
+    localStorage.setItem('vb_sync_room', room);
+    updateCloudSyncUI();
+  }
+  
+  // 現在のベースURLを取得
+  let baseUrl = window.location.origin + window.location.pathname;
+  if (!baseUrl.startsWith('http')) {
+    baseUrl = 'https://volleyball-stats.app/';
+  }
+  const shareUrl = `${baseUrl}?room=${encodeURIComponent(room)}`;
+
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(shareUrl).then(() => {
+      toast('🔗 共有URLをコピーしました！LINEやメールで仲間に送ってください');
+    }).catch(() => {
+      copyShareUrlFallback(shareUrl);
+    });
+  } else {
+    copyShareUrlFallback(shareUrl);
+  }
+}
+
+function copyShareUrlFallback(url) {
+  const ta = document.createElement('textarea');
+  ta.value = url;
+  document.body.appendChild(ta);
+  ta.select();
+  document.execCommand('copy');
+  document.body.removeChild(ta);
+  toast('🔗 共有URLをコピーしました！LINEやメールで仲間に送ってください');
+}
+
+function checkUrlParamsForRoom() {
+  try {
+    const urlParams = new URLSearchParams(window.location.search);
+    const roomParam = urlParams.get('room') || urlParams.get('team');
+    if (roomParam) {
+      const current = getCloudRoom();
+      if (current !== roomParam) {
+        localStorage.setItem('vb_sync_room', roomParam);
+        updateCloudSyncUI();
+        toast(`🔗 共有ルーム [${roomParam}] に自動接続しました！`);
+      }
+    }
+  } catch (e) {}
+}
 
 function getCloudRoom() {
   return (localStorage.getItem('vb_sync_room') || '').trim();
@@ -1447,6 +1505,8 @@ function goHome() {
   selectedPlayer = null;
   renderMatchList();
   showScreen('homeScreen');
+    // Check URL params for auto room join (?room=...)
+  checkUrlParamsForRoom();
   // Initialize Cloud Sync if room is configured
   updateCloudSyncUI();
   if (getCloudRoom()) {
@@ -1671,11 +1731,10 @@ function saveSubstituteMembers() {
 // RECORD ACTIONS (入力処理)
 // ============================================================
 function switchCat(cat) {
-  currentCat = cat;
-  ['serve','receive','spike'].forEach(c => {
-    document.getElementById(`tab${c.charAt(0).toUpperCase()+c.slice(1)}`).classList.toggle('active', c === cat);
-    document.getElementById(`input${c.charAt(0).toUpperCase()+c.slice(1)}`).classList.toggle('hidden', c !== cat);
-  });
+  currentCat = cat || 'serve';
+  const targetId = cat === 'serve' ? 'secServe' : cat === 'receive' ? 'secReceive' : 'secSpike';
+  const el = document.getElementById(targetId);
+  if (el) el.scrollIntoView({ behavior: 'smooth' });
 }
 
 function recordAction(cat, val) {
@@ -2605,6 +2664,8 @@ function esc(s) {
   }
   renderMatchList();
   showScreen('homeScreen');
+    // Check URL params for auto room join (?room=...)
+  checkUrlParamsForRoom();
   // Initialize Cloud Sync if room is configured
   updateCloudSyncUI();
   if (getCloudRoom()) {
