@@ -1005,6 +1005,13 @@
         </span>
       </div>
 
+      <!-- Ping Test Button -->
+      <div style="margin-top:10px;">
+        <button class="btn btn-outline btn-md btn-block" onclick="sendPingTest()" style="border-color:#1976D2; color:#1565C0; font-weight:700; background:#E3F2FD; padding:10px;">
+          🔔 端末間の通信テスト（相手端末にブザーを送る）
+        </button>
+      </div>
+
       <div style="display:flex; gap:8px; margin-top:14px; flex-wrap:wrap;">
         <button class="btn btn-primary btn-md" style="flex:1;" onclick="manualPushCloud()">☁️ 今すぐ全体保存</button>
         <button class="btn btn-outline btn-md" style="flex:1;" onclick="manualPullCloud()">🔄 今すぐ最新取得</button>
@@ -1019,6 +1026,24 @@
           <input type="checkbox" id="autoPullCheckbox" onchange="toggleAutoPull()" checked style="width:18px; height:18px;">
           <span>リアルタイム自動同期（他端末の入力を即時受信）</span>
         </label>
+      </div>
+
+      <!-- Firebase Settings -->
+      <div style="margin-top:14px; background:#F0F7FF; border:1px solid #BBDEFB; border-radius:8px; padding:12px;">
+        <div style="display:flex; align-items:center; justify-content:space-between;">
+          <span style="font-size:0.82rem; font-weight:700; color:#1565C0;">🔥 Google Firebase連携（推奨・完全無料・超安定）</span>
+        </div>
+        <div style="margin-top:6px; font-size:0.75rem; color:#455A64; line-height:1.45;">
+          Googleの無料データベースURLを設定すると、0.1秒の高速同期＆完全プライベートで同期できます。
+          <div style="display:flex; gap:6px; margin-top:8px;">
+            <input type="text" class="form-control" id="firebaseDbUrlInput" placeholder="https://xxx-default-rtdb.firebaseio.com/" style="font-size:0.75rem; background:#fff;">
+            <button class="btn btn-primary btn-sm" onclick="saveFirebaseDbUrl()" style="white-space:nowrap;">保存</button>
+          </div>
+          <div id="firebaseActiveBadge" style="margin-top:6px; font-size:0.72rem; color:#2E7D32; display:none; font-weight:600;">
+            ✅ Firebase連携中（共有URLにも自動で引き継がれます）
+          </div>
+          <span style="font-size:0.7rem; color:#78909C; display:block; margin-top:4px;">※未設定の場合は、登録不要の無料合言葉サーバーで同期されます。</span>
+        </div>
       </div>
 
       <div style="margin-top:14px; text-align:right;">
@@ -1094,7 +1119,12 @@ function getShareUrl(room) {
   }
   baseUrl = baseUrl.replace(/\/index\.html$/, '');
   if (!baseUrl.endsWith('/')) baseUrl += '/';
-  return `${baseUrl}?room=${encodeURIComponent(currentRoom)}`;
+  let shareUrl = `${baseUrl}?room=${encodeURIComponent(currentRoom)}`;
+  const fbUrl = (localStorage.getItem('vb_firebase_url') || '').trim();
+  if (fbUrl) {
+    shareUrl += `&fb=${encodeURIComponent(fbUrl)}`;
+  }
+  return shareUrl;
 }
 
 function saveCustomGithubUrl() {
@@ -1182,10 +1212,19 @@ function triggerNativeShare() {
 function checkUrlParamsForRoom() {
   try {
     const urlParams = new URLSearchParams(window.location.search);
+    const fbParam = urlParams.get('fb');
+    let fbUpdated = false;
+    if (fbParam) {
+      const cleanFb = decodeURIComponent(fbParam).trim();
+      if (cleanFb && localStorage.getItem('vb_firebase_url') !== cleanFb) {
+        localStorage.setItem('vb_firebase_url', cleanFb);
+        fbUpdated = true;
+      }
+    }
     const roomParam = urlParams.get('room') || urlParams.get('team');
     if (roomParam) {
       const current = getCloudRoom();
-      if (current !== roomParam) {
+      if (current !== roomParam || fbUpdated) {
         localStorage.setItem('vb_sync_room', roomParam);
         updateCloudSyncUI();
         toast(`🔗 共有ルーム [${roomParam}] に自動接続しました！`);
@@ -1199,6 +1238,11 @@ function checkUrlParamsForRoom() {
 function openCloudSyncModal() {
   const room = getCloudRoom();
   document.getElementById('syncRoomInput').value = room;
+  const fbInput = document.getElementById('firebaseDbUrlInput');
+  const fbUrl = localStorage.getItem('vb_firebase_url') || '';
+  if (fbInput) fbInput.value = fbUrl;
+  const fbBadge = document.getElementById('firebaseActiveBadge');
+  if (fbBadge) fbBadge.style.display = fbUrl ? 'block' : 'none';
   updateCloudSyncUI();
   document.getElementById('cloudSyncModal').classList.remove('hidden');
 }
@@ -1243,30 +1287,34 @@ function updateCloudSyncUI(connectedState) {
 
   if (room) {
     const isConn = (connectedState !== undefined) ? connectedState : (isSyncConnected || !!localStorage.getItem('vb_last_sync_time'));
+    const fbUrl = (localStorage.getItem('vb_firebase_url') || '').trim();
     if (statusCard) {
       statusCard.style.background = isConn ? '#E8F5E9' : '#FFF8E1';
       statusCard.style.borderColor = isConn ? '#81C784' : '#FFE082';
-      statusTitle.textContent = isConn ? `🟢 リアルタイム同期中: [ ${room} ]` : `🟡 接続確認中: [ ${room} ]`;
+      const providerLabel = fbUrl ? '🔥 Firebase高速同期中' : '🟢 リアルタイム同期中';
+      statusTitle.textContent = isConn ? `${providerLabel}: [ ${room} ]` : `🟡 接続確認中: [ ${room} ]`;
       statusTitle.style.color = isConn ? '#1B5E20' : '#E65100';
       const lastTime = localStorage.getItem('vb_last_sync_time') || '接続中';
-      statusDesc.textContent = `合言葉 [ ${room} ] で全端末と自動共有中 (最新同期: ${lastTime})`;
+      const serverDesc = fbUrl ? 'Google Firebase' : '合言葉サーバー';
+      statusDesc.textContent = `合言葉 [ ${room} ] (${serverDesc}) で全端末と自動共有中 (最新同期: ${lastTime})`;
     }
     if (homeBtn) {
-      homeBtn.textContent = `☁️ 同期中`;
+      homeBtn.textContent = fbUrl ? '🔥 同期中' : '☁️ 同期中';
       homeBtn.style.background = '#2E7D32';
     }
     const homeBadge = document.getElementById('homeSyncBadge');
     const homeSub = document.getElementById('homeSyncSubtext');
     if (homeBadge) {
-      homeBadge.textContent = '🟢 同期中: ' + room;
+      homeBadge.textContent = (fbUrl ? '🔥 ' : '🟢 ') + room;
       homeBadge.style.background = '#A5D6A7';
     }
     if (homeSub) {
       const lastTime = localStorage.getItem('vb_last_sync_time') || '接続完了';
-      homeSub.textContent = `全端末で共有中 (最新: ${lastTime})`;
+      const serverDesc = fbUrl ? 'Google Firebase連携' : '共有中';
+      homeSub.textContent = `全端末で${serverDesc} (最新: ${lastTime})`;
     }
     if (inputBtn) {
-      inputBtn.textContent = `☁️●`;
+      inputBtn.textContent = fbUrl ? `🔥●` : `☁️●`;
       inputBtn.style.background = '#2E7D32';
     }
   } else {
@@ -1309,6 +1357,9 @@ function saveCloudRoom() {
   updateCloudSyncUI(true);
   toast(`合言葉 [${room}] を設定しました！最新データを同期中...`);
   connectSyncStream();
+  setTimeout(() => {
+    broadcastSyncAction({ type: 'action', action: 'req_state' });
+  }, 600);
   syncPullFromCloud().then(() => {
     syncPushToCloud(true);
   });
@@ -1360,19 +1411,63 @@ function isAutoPullOn() {
 function connectSyncStream() {
   const room = getCloudRoom();
   if (!room || !isAutoPullOn()) return;
-  const topic = getSyncTopic(room);
-  if (!topic) return;
 
   if (syncEventSource) {
     try { syncEventSource.close(); } catch (e) {}
     syncEventSource = null;
   }
 
+  const fbUrl = (localStorage.getItem('vb_firebase_url') || '').trim();
+  if (fbUrl) {
+    try {
+      syncEventSource = new EventSource(`${fbUrl}/rooms/${encodeURIComponent(room)}/actions.json`);
+      syncEventSource.onopen = () => {
+        isSyncConnected = true;
+        updateCloudSyncUI(true);
+        setTimeout(() => {
+          broadcastSyncAction({ type: 'action', action: 'req_state' });
+        }, 300);
+      };
+      syncEventSource.onerror = () => {
+        if (syncEventSource && syncEventSource.readyState === 2) {
+          isSyncConnected = false;
+          updateCloudSyncUI(false);
+        }
+      };
+      syncEventSource.addEventListener('put', (e) => {
+        isSyncConnected = true;
+        try {
+          const payload = JSON.parse(e.data);
+          if (payload.path === '/') {
+            if (payload.data && typeof payload.data === 'object') {
+              Object.values(payload.data).forEach(act => {
+                if (act) handleIncomingNtfyMessage({ message: JSON.stringify(act) }, true);
+              });
+            }
+          } else if (payload.data) {
+            handleIncomingNtfyMessage({ message: JSON.stringify(payload.data) }, false);
+          }
+        } catch (err) {
+          console.warn('Firebase SSE parse error:', err);
+        }
+      });
+      return;
+    } catch (e) {
+      console.warn('Firebase EventSource failed:', e);
+    }
+  }
+
+  const topic = getSyncTopic(room);
+  if (!topic) return;
+
   try {
     syncEventSource = new EventSource(`https://ntfy.sh/${topic}/sse`);
     syncEventSource.onopen = () => {
       isSyncConnected = true;
       updateCloudSyncUI(true);
+      setTimeout(() => {
+        broadcastSyncAction({ type: 'action', action: 'req_state' });
+      }, 400);
     };
     syncEventSource.onerror = () => {
       // EventSource handles reconnection automatically. Only set false if closed.
@@ -1428,9 +1523,87 @@ function handleIncomingNtfyMessage(ntfyMsg, isReplay) {
       applyRemoteEditRecord(data.matchId, data.record);
     } else if (data.action === 'court_sub') {
       applyRemoteCourtSub(data.matchId, data.courtPlayers);
+    } else if (data.action === 'add_player') {
+      if (data.name) {
+        let p = loadPlayers();
+        if (!p.includes(data.name)) {
+          p.push(data.name);
+          savePlayers(p);
+          renderPlayerManageList();
+          renderPlayerBtns();
+          if (!isReplay) toast(`👤 選手追加: ${data.name}`);
+        }
+      }
+    } else if (data.action === 'del_player') {
+      if (data.name) {
+        let p = loadPlayers();
+        p = p.filter(x => x !== data.name);
+        savePlayers(p);
+        renderPlayerManageList();
+        renderPlayerBtns();
+        if (!isReplay) toast(`🗑️ 選手削除: ${data.name}`);
+      }
+    } else if (data.action === 'clear_players') {
+      savePlayers([]);
+      renderPlayerManageList();
+      renderPlayerBtns();
+      if (!isReplay) toast('選手名簿がクリアされました');
+    } else if (data.action === 'sync_players') {
+      if (Array.isArray(data.players) && data.players.length > 0) {
+        let localPlayers = loadPlayers();
+        let changed = false;
+        data.players.forEach(name => {
+          if (name && !localPlayers.includes(name)) {
+            localPlayers.push(name);
+            changed = true;
+          }
+        });
+        if (changed || localPlayers.length === 0) {
+          savePlayers(localPlayers.length > 0 ? localPlayers : data.players);
+          renderPlayerManageList();
+          renderPlayerBtns();
+        }
+      }
+    } else if (data.action === 'sync_matches') {
+      if (Array.isArray(data.matches) && data.matches.length > 0) {
+        let currentMatches = loadMatches();
+        let changed = false;
+        data.matches.forEach(m => {
+          const idx = currentMatches.findIndex(x => x.id === m.id);
+          if (idx < 0) {
+            currentMatches.push(m);
+            changed = true;
+          }
+        });
+        if (changed) {
+          saveMatches(currentMatches);
+          renderMatchList();
+        }
+      }
+    } else if (data.action === 'create_match') {
+      let ms = loadMatches();
+      if (data.match && !ms.some(m => m.id === data.match.id)) {
+        ms.push(data.match);
+        saveMatches(ms);
+        renderMatchList();
+        if (!isReplay) toast(`🏐 試合追加: ${data.match.name}`);
+      }
+    } else if (data.action === 'del_match') {
+      let ms = loadMatches().filter(m => m.id !== data.matchId);
+      saveMatches(ms);
+      renderMatchList();
+      if (!isReplay) toast('試合が削除されました');
+    } else if (data.action === 'ping') {
+      toast(`🔔 [${data.senderName || '別端末'}] から通信テストを受信！正常に繋がっています`);
     } else if (data.action === 'req_state') {
-      // Peer requested state
-      syncPushToCloud(true);
+      const p = loadPlayers();
+      if (p.length > 0) {
+        broadcastSyncAction({ type: 'action', action: 'sync_players', players: p });
+      }
+      const m = loadMatches();
+      if (m.length > 0) {
+        broadcastSyncAction({ type: 'action', action: 'sync_matches', matches: m });
+      }
     }
   } else if (data.type === 'state_snapshot') {
     applyRemoteSnapshot(data);
@@ -1561,6 +1734,9 @@ function refreshActiveViews(lastRec, actionType) {
   localStorage.setItem('vb_last_sync_time', timeStr);
   updateCloudSyncUI();
 
+  renderPlayerBtns();
+  renderPlayerManageList();
+
   if (currentMatchId) {
     if (lastRec) {
       updateUndoBar(lastRec);
@@ -1580,17 +1756,70 @@ function refreshActiveViews(lastRec, actionType) {
   }
 }
 
+function sendPingTest() {
+  const room = getCloudRoom();
+  if (!room) {
+    toast('まず合言葉を設定してください');
+    return;
+  }
+  const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+  const myName = isMobile ? 'スマホ' : 'パソコン';
+  broadcastSyncAction({ type: 'action', action: 'ping', senderName: myName });
+  setTimeout(() => {
+    broadcastSyncAction({ type: 'action', action: 'req_state' });
+  }, 200);
+  toast(`🔔 [${myName}] から通信テストを発信しました！もう一方の端末の画面を確認してください`);
+}
+
+function saveFirebaseDbUrl() {
+  const input = document.getElementById('firebaseDbUrlInput');
+  let url = (input ? input.value : '').trim();
+  if (url && !url.startsWith('http')) url = 'https://' + url;
+  if (url) url = url.replace(/\/+$/, '');
+  if (url) {
+    localStorage.setItem('vb_firebase_url', url);
+    toast('🔥 Firebase連携URLを保存しました！');
+  } else {
+    localStorage.removeItem('vb_firebase_url');
+    toast('Firebase設定を解除しました（合言葉モードに戻ります）');
+  }
+  const fbBadge = document.getElementById('firebaseActiveBadge');
+  if (fbBadge) fbBadge.style.display = url ? 'block' : 'none';
+  updateCloudSyncUI();
+  connectSyncStream();
+  syncPullFromCloud(false);
+}
+
 // ------------------------------------------------------------
-// Broadcast Real-time Action via ntfy
+// Broadcast Real-time Action via ntfy & Firebase
 // ------------------------------------------------------------
 async function broadcastSyncAction(actionObj) {
   const room = getCloudRoom();
   if (!room || !isAutoSyncOn()) return;
-  const topic = getSyncTopic(room);
-  if (!topic) return;
 
   actionObj.sender = myClientId;
   actionObj.time = Date.now();
+
+  const fbUrl = (localStorage.getItem('vb_firebase_url') || '').trim();
+  if (fbUrl) {
+    try {
+      await fetch(`${fbUrl}/rooms/${encodeURIComponent(room)}/actions.json`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(actionObj)
+      });
+      const timeStr = new Date().toLocaleTimeString('ja-JP', { hour:'2-digit', minute:'2-digit', second:'2-digit' });
+      localStorage.setItem('vb_last_sync_time', timeStr);
+      isSyncConnected = true;
+      updateCloudSyncUI(true);
+      return;
+    } catch (e) {
+      console.warn('Firebase broadcast error:', e);
+    }
+  }
+
+  const topic = getSyncTopic(room);
+  if (!topic) return;
 
   try {
     // Send without custom headers to avoid CORS preflight (OPTIONS) failure
@@ -1609,13 +1838,11 @@ async function broadcastSyncAction(actionObj) {
 }
 
 // ------------------------------------------------------------
-// Push & Pull Full State via ntfy
+// Push & Pull Full State via ntfy & Firebase
 // ------------------------------------------------------------
 async function syncPushToCloud(isSilent = false) {
   const room = getCloudRoom();
   if (!room || isSyncing) return;
-  const topic = getSyncTopic(room);
-  if (!topic) return;
   isSyncing = true;
 
   try {
@@ -1630,6 +1857,24 @@ async function syncPushToCloud(isSilent = false) {
       matches: matches
     };
     const jsonStr = JSON.stringify(payload);
+
+    const fbUrl = (localStorage.getItem('vb_firebase_url') || '').trim();
+    if (fbUrl) {
+      await fetch(`${fbUrl}/rooms/${encodeURIComponent(room)}/snapshot.json`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: jsonStr
+      });
+      const timeStr = new Date().toLocaleTimeString('ja-JP', { hour:'2-digit', minute:'2-digit', second:'2-digit' });
+      localStorage.setItem('vb_last_sync_time', timeStr);
+      isSyncConnected = true;
+      updateCloudSyncUI(true);
+      if (!isSilent) toast('☁️ クラウドへデータを保存しました！');
+      return;
+    }
+
+    const topic = getSyncTopic(room);
+    if (!topic) return;
 
     // Standard POST without custom headers avoids CORS preflight rejection
     await fetch(`https://ntfy.sh/${topic}`, {
@@ -1653,6 +1898,40 @@ async function syncPushToCloud(isSilent = false) {
 async function syncPullFromCloud(isSilent = false) {
   const room = getCloudRoom();
   if (!room) return false;
+
+  const fbUrl = (localStorage.getItem('vb_firebase_url') || '').trim();
+  if (fbUrl) {
+    try {
+      // 1. Pull snapshot if exists
+      const snapRes = await fetch(`${fbUrl}/rooms/${encodeURIComponent(room)}/snapshot.json`);
+      if (snapRes.ok) {
+        const snap = await snapRes.json();
+        if (snap && snap.type === 'state_snapshot') {
+          applyRemoteSnapshot(snap);
+        }
+      }
+      // 2. Pull actions
+      const res = await fetch(`${fbUrl}/rooms/${encodeURIComponent(room)}/actions.json`);
+      if (res.ok) {
+        const obj = await res.json();
+        if (obj && typeof obj === 'object') {
+          Object.values(obj).forEach(actionData => {
+            if (actionData) handleIncomingNtfyMessage({ message: JSON.stringify(actionData) }, true);
+          });
+        }
+      }
+      const timeStr = new Date().toLocaleTimeString('ja-JP', { hour:'2-digit', minute:'2-digit', second:'2-digit' });
+      localStorage.setItem('vb_last_sync_time', timeStr);
+      isSyncConnected = true;
+      updateCloudSyncUI(true);
+      if (!isSilent) toast('🔄 最新の共有データを同期しました！');
+      return true;
+    } catch (e) {
+      if (!isSilent) toast('最新データの取得に失敗しました');
+      return false;
+    }
+  }
+
   const topic = getSyncTopic(room);
   if (!topic) return false;
 
@@ -1675,9 +1954,6 @@ async function syncPullFromCloud(isSilent = false) {
         } catch (e) {}
       }
     }
-
-    // Also broadcast request for live state to any connected peers
-    broadcastSyncAction({ type: 'action', action: 'req_state' });
 
     const timeStr = new Date().toLocaleTimeString('ja-JP', { hour:'2-digit', minute:'2-digit', second:'2-digit' });
     localStorage.setItem('vb_last_sync_time', timeStr);
@@ -1970,7 +2246,7 @@ function createMatch() {
   saveMatches(ms);
   closeNewMatch();
   openMatch(m.id);
-  syncPushToCloud(true);
+  broadcastSyncAction({ type: 'action', action: 'create_match', match: m });
 }
 
 function askDeleteMatch(id, name) {
@@ -1986,7 +2262,7 @@ function confirmDeleteMatch() {
   closeDeleteMatch();
   renderMatchList();
   toast('試合を削除しました');
-  syncPushToCloud(true);
+  broadcastSyncAction({ type: 'action', action: 'del_match', matchId: deleteTargetId });
 }
 
 // ============================================================
@@ -3029,8 +3305,9 @@ function addPlayer() {
   input.value = '';
   input.blur();
   renderPlayerManageList();
+  renderPlayerBtns();
   toast(`${name} を登録しました`);
-  syncPushToCloud(true);
+  broadcastSyncAction({ type: 'action', action: 'add_player', name: name });
 }
 function deletePlayer(idx) {
   const players = loadPlayers();
@@ -3039,16 +3316,18 @@ function deletePlayer(idx) {
   savePlayers(players);
   localStorage.setItem('vb_players_updated_at', String(Date.now()));
   renderPlayerManageList();
+  renderPlayerBtns();
   toast(`${name} を削除しました`);
-  syncPushToCloud(true);
+  broadcastSyncAction({ type: 'action', action: 'del_player', name: name });
 }
 function clearAllPlayers() {
   if (!confirm('登録されている選手をすべて削除しますか？')) return;
   savePlayers([]);
   localStorage.setItem('vb_players_updated_at', String(Date.now()));
   renderPlayerManageList();
+  renderPlayerBtns();
   toast('選手名簿をクリアしました');
-  syncPushToCloud(true);
+  broadcastSyncAction({ type: 'action', action: 'clear_players' });
 }
 
 // ============================================================
