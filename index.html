@@ -557,7 +557,7 @@
             <span id="homeSyncBadge" style="font-size: 0.75rem; background: #C8E6C9; color: #1B5E20; padding: 2px 8px; border-radius: 12px; font-weight:700;">未設定</span>
           </div>
           <div style="font-size: 0.78rem; color: #388E3C; margin-top: 3px;" id="homeSyncSubtext">
-            合言葉を入れると他のiPhoneやPCと自動で繋がります
+            Firebase URLを設定すると他のスマホやPCと自動で繋がります
           </div>
         </div>
         <button class="btn btn-sm btn-success" style="pointer-events: none; white-space:nowrap;">設定 ➜</button>
@@ -952,12 +952,12 @@
 
 
 <!-- ============================================================
-     MODAL: CLOUD SYNC (合言葉による複数端末自動同期)
+     MODAL: CLOUD SYNC (Google Firebase リアルタイム同期)
      ============================================================ -->
 <div class="modal-overlay hidden" id="cloudSyncModal">
   <div class="modal" style="max-width:480px;">
     <div class="modal-header">
-      <span>☁️ 複数端末でのリアルタイム共有・同期</span>
+      <span>🔥 複数端末でのリアルタイム共有・同期</span>
       <button class="modal-close" onclick="closeCloudSyncModal()">✕</button>
     </div>
     <div class="modal-body">
@@ -974,34 +974,34 @@
 
       <!-- Status Card -->
       <div id="syncStatusCard" style="background:#E8F5E9; border:1.5px solid #81C784; border-radius:10px; padding:12px; margin-bottom:14px; text-align:center;">
-        <div style="font-size:0.88rem; font-weight:800; color:#1B5E20;" id="syncStatusTitle">🟢 同期中</div>
-        <div style="font-size:0.78rem; color:#388E3C; margin-top:3px;" id="syncStatusDesc">合言葉を設定すると自動で全端末にデータが共有されます</div>
+        <div style="font-size:0.88rem; font-weight:800; color:#1B5E20;" id="syncStatusTitle">🔥 Google Firebase 同期中</div>
+        <div style="font-size:0.78rem; color:#388E3C; margin-top:3px;" id="syncStatusDesc">全端末とリアルタイムで自動同期中</div>
       </div>
 
-      <!-- Room Key Setting -->
-      <div class="form-group">
-        <label class="form-label">チームの合言葉（ルーム名）</label>
+      <!-- Firebase Database URL Setting -->
+      <div class="form-group" style="background:#F0F7FF; border:1.5px solid #BBDEFB; border-radius:8px; padding:12px;">
+        <label class="form-label" style="color:#1565C0; font-weight:700; margin-bottom:4px;">Google Firebase データベースURL</label>
         <div style="display:flex; gap:6px;">
-          <input type="text" class="form-control" id="syncRoomInput" placeholder="例: sakura-volleyball" style="font-weight:700;">
-          <button class="btn btn-primary btn-md" onclick="saveCloudRoom()" style="white-space:nowrap;">設定</button>
+          <input type="text" class="form-control" id="firebaseDbUrlInput" placeholder="https://xxx-default-rtdb.firebaseio.com/" style="font-size:0.78rem; background:#fff; font-family:monospace;">
+          <button class="btn btn-primary btn-md" onclick="saveFirebaseDbUrl()" style="white-space:nowrap;">保存</button>
         </div>
-        <span style="font-size:0.75rem; color:#757575; display:block; margin-top:4px;">
-          ※別のiPhoneやパソコンでも<strong>全く同じ合言葉</strong>を入力するだけで、自動でデータが繋がります。
-        </span>
+        <div id="firebaseActiveBadge" style="margin-top:6px; font-size:0.75rem; color:#2E7D32; font-weight:700; display:none;">
+          ✅ Firebase連携中（この端末はクラウドに正常接続されています）
+        </div>
       </div>
 
       <!-- Share URL Display & Copy -->
       <div class="form-group" style="margin-top:14px; background:#F8FAFC; border:1px solid #DCE2E8; border-radius:8px; padding:10px;">
-        <label class="form-label" style="margin-bottom:4px; font-weight:700;">🔗 共有用URL（タップで自動参加）</label>
+        <label class="form-label" style="margin-bottom:4px; font-weight:700;">🔗 共有用URL（タップで自動同期）</label>
         <div style="display:flex; gap:6px;">
-          <input type="text" class="form-control" id="shareUrlDisplay" readonly style="font-size:0.78rem; background:#fff; font-family:monospace; color:#333;" placeholder="合言葉を設定するとURLが表示されます">
+          <input type="text" class="form-control" id="shareUrlDisplay" readonly style="font-size:0.78rem; background:#fff; font-family:monospace; color:#333;" placeholder="Firebase URLを設定すると表示されます">
           <button class="btn btn-primary btn-md" onclick="copyShareUrl()" style="white-space:nowrap;">📋 コピー</button>
         </div>
         <div style="display:flex; gap:6px; margin-top:8px;">
           <button class="btn btn-teal btn-sm btn-block" id="nativeShareBtn" onclick="triggerNativeShare()" style="display:none; font-size:0.85rem; padding:8px;">📲 LINEやメッセージで送る (シェア)</button>
         </div>
         <span style="font-size:0.72rem; color:#616161; display:block; margin-top:5px; text-align:center;">
-          ※URLを開いた人は、合言葉の入力なしで自動的に同じルームに繋がります
+          ※このURLをスマホで開くだけで、設定入力なしで全自動で同期されます
         </span>
       </div>
 
@@ -1028,26 +1028,8 @@
         </label>
       </div>
 
-      <!-- Firebase Settings -->
-      <div style="margin-top:14px; background:#F0F7FF; border:1px solid #BBDEFB; border-radius:8px; padding:12px;">
-        <div style="display:flex; align-items:center; justify-content:space-between;">
-          <span style="font-size:0.82rem; font-weight:700; color:#1565C0;">🔥 Google Firebase連携（推奨・完全無料・超安定）</span>
-        </div>
-        <div style="margin-top:6px; font-size:0.75rem; color:#455A64; line-height:1.45;">
-          Googleの無料データベースURLを設定すると、0.1秒の高速同期＆完全プライベートで同期できます。
-          <div style="display:flex; gap:6px; margin-top:8px;">
-            <input type="text" class="form-control" id="firebaseDbUrlInput" placeholder="https://xxx-default-rtdb.firebaseio.com/" style="font-size:0.75rem; background:#fff;">
-            <button class="btn btn-primary btn-sm" onclick="saveFirebaseDbUrl()" style="white-space:nowrap;">保存</button>
-          </div>
-          <div id="firebaseActiveBadge" style="margin-top:6px; font-size:0.72rem; color:#2E7D32; display:none; font-weight:600;">
-            ✅ Firebase連携中（共有URLにも自動で引き継がれます）
-          </div>
-          <span style="font-size:0.7rem; color:#78909C; display:block; margin-top:4px;">※未設定の場合は、登録不要の無料合言葉サーバーで同期されます。</span>
-        </div>
-      </div>
-
       <div style="margin-top:14px; text-align:right;">
-        <button class="btn btn-sm btn-outline" style="color:#C62828; border-color:#EF9A9A;" onclick="clearCloudRoom()">合言葉の解除（同期オフ）</button>
+        <button class="btn btn-sm btn-outline" style="color:#C62828; border-color:#EF9A9A;" onclick="clearCloudSync()">同期設定の解除（オフにする）</button>
       </div>
     </div>
     <div class="modal-footer">
@@ -1102,12 +1084,11 @@ function getSyncTopic(room) {
 }
 
 function getCloudRoom() {
-  return (localStorage.getItem('vb_sync_room') || '').trim();
+  return (localStorage.getItem('vb_sync_room') || 'team').trim();
 }
 
-function getShareUrl(room) {
-  const currentRoom = room || getCloudRoom();
-  if (!currentRoom) return '';
+function getShareUrl() {
+  const fbUrl = (localStorage.getItem('vb_firebase_url') || '').trim();
   let baseUrl = window.location.origin + window.location.pathname;
 
   if (!baseUrl.startsWith('http')) {
@@ -1119,12 +1100,11 @@ function getShareUrl(room) {
   }
   baseUrl = baseUrl.replace(/\/index\.html$/, '');
   if (!baseUrl.endsWith('/')) baseUrl += '/';
-  let shareUrl = `${baseUrl}?room=${encodeURIComponent(currentRoom)}`;
-  const fbUrl = (localStorage.getItem('vb_firebase_url') || '').trim();
+  
   if (fbUrl) {
-    shareUrl += `&fb=${encodeURIComponent(fbUrl)}`;
+    return `${baseUrl}?fb=${encodeURIComponent(fbUrl)}`;
   }
-  return shareUrl;
+  return baseUrl;
 }
 
 function saveCustomGithubUrl() {
@@ -1142,14 +1122,7 @@ function saveCustomGithubUrl() {
 }
 
 function copyShareUrl() {
-  let room = getCloudRoom();
-  if (!room) {
-    room = 'team_' + Math.random().toString(36).substring(2, 7);
-    localStorage.setItem('vb_sync_room', room);
-    updateCloudSyncUI();
-  }
-
-  const shareUrl = getShareUrl(room);
+  const shareUrl = getShareUrl();
   if (!shareUrl) {
     const inputUrl = prompt(
       '【GitHub Pagesの公開URLを入力してください】\n現在パソコン上のファイル(file://)で開いているため、スマホと共有するにはGitHub Pagesに公開したURLが必要です。\n例: https://(ユーザー名).github.io/(リポジトリ名)/',
@@ -1193,18 +1166,17 @@ function copyShareUrlFallback(url) {
 }
 
 function triggerNativeShare() {
-  const room = getCloudRoom();
-  const shareUrl = getShareUrl(room);
+  const shareUrl = getShareUrl();
   if (!shareUrl) return;
 
   if (navigator.share) {
     navigator.share({
-      title: 'バレーボール統計 - 共有ルーム',
-      text: `バレーボール統計の入力ルーム「${room}」に接続します。リアルタイムで入力が共有されます。`,
+      title: 'バレーボール統計 - リアルタイム共有',
+      text: 'バレーボール統計の入力画面に接続します。リアルタイムで入力が共有されます。',
       url: shareUrl
     }).catch(() => {});
   } else {
-    const lineUrl = `https://line.me/R/msg/text/?${encodeURIComponent('🏐 バレーボール統計の共有ルーム: ' + shareUrl)}`;
+    const lineUrl = `https://line.me/R/msg/text/?${encodeURIComponent('🏐 バレーボール統計の共有URL: ' + shareUrl)}`;
     window.open(lineUrl, '_blank');
   }
 }
@@ -1213,21 +1185,12 @@ function checkUrlParamsForRoom() {
   try {
     const urlParams = new URLSearchParams(window.location.search);
     const fbParam = urlParams.get('fb');
-    let fbUpdated = false;
     if (fbParam) {
       const cleanFb = decodeURIComponent(fbParam).trim();
       if (cleanFb && localStorage.getItem('vb_firebase_url') !== cleanFb) {
         localStorage.setItem('vb_firebase_url', cleanFb);
-        fbUpdated = true;
-      }
-    }
-    const roomParam = urlParams.get('room') || urlParams.get('team');
-    if (roomParam) {
-      const current = getCloudRoom();
-      if (current !== roomParam || fbUpdated) {
-        localStorage.setItem('vb_sync_room', roomParam);
         updateCloudSyncUI();
-        toast(`🔗 共有ルーム [${roomParam}] に自動接続しました！`);
+        toast('🔥 Google Firebaseに自動接続しました！');
         connectSyncStream();
         syncPullFromCloud(true);
       }
@@ -1236,8 +1199,6 @@ function checkUrlParamsForRoom() {
 }
 
 function openCloudSyncModal() {
-  const room = getCloudRoom();
-  document.getElementById('syncRoomInput').value = room;
   const fbInput = document.getElementById('firebaseDbUrlInput');
   const fbUrl = localStorage.getItem('vb_firebase_url') || '';
   if (fbInput) fbInput.value = fbUrl;
@@ -1252,7 +1213,7 @@ function closeCloudSyncModal() {
 }
 
 function updateCloudSyncUI(connectedState) {
-  const room = getCloudRoom();
+  const fbUrl = (localStorage.getItem('vb_firebase_url') || '').trim();
   const statusCard = document.getElementById('syncStatusCard');
   const statusTitle = document.getElementById('syncStatusTitle');
   const statusDesc = document.getElementById('syncStatusDesc');
@@ -1261,6 +1222,7 @@ function updateCloudSyncUI(connectedState) {
   const shareUrlDisplay = document.getElementById('shareUrlDisplay');
   const nativeShareBtn = document.getElementById('nativeShareBtn');
   const fileNotice = document.getElementById('fileProtocolNotice');
+  const fbBadge = document.getElementById('firebaseActiveBadge');
 
   if (fileNotice) {
     const isFile = window.location.protocol === 'file:';
@@ -1271,59 +1233,61 @@ function updateCloudSyncUI(connectedState) {
     }
   }
 
-  const shareUrl = room ? getShareUrl(room) : '';
+  if (fbBadge) {
+    fbBadge.style.display = fbUrl ? 'block' : 'none';
+  }
+
+  const shareUrl = fbUrl ? getShareUrl() : '';
   if (shareUrlDisplay) {
     if (shareUrl) {
       shareUrlDisplay.value = shareUrl;
     } else if (window.location.protocol === 'file:') {
       shareUrlDisplay.value = '※上の枠にGitHub PagesのURLを入力して保存してください';
     } else {
-      shareUrlDisplay.value = '';
+      shareUrlDisplay.value = fbUrl ? '' : '※上の枠にFirebase URLを設定すると表示されます';
     }
   }
   if (nativeShareBtn) {
-    nativeShareBtn.style.display = (room && shareUrl) ? 'block' : 'none';
+    nativeShareBtn.style.display = (fbUrl && shareUrl) ? 'block' : 'none';
   }
 
-  if (room) {
-    const isConn = (connectedState !== undefined) ? connectedState : (isSyncConnected || !!localStorage.getItem('vb_last_sync_time'));
-    const fbUrl = (localStorage.getItem('vb_firebase_url') || '').trim();
+  const isConn = (connectedState !== undefined) ? connectedState : (isSyncConnected || !!localStorage.getItem('vb_last_sync_time'));
+
+  if (fbUrl) {
     if (statusCard) {
       statusCard.style.background = isConn ? '#E8F5E9' : '#FFF8E1';
       statusCard.style.borderColor = isConn ? '#81C784' : '#FFE082';
-      const providerLabel = fbUrl ? '🔥 Firebase高速同期中' : '🟢 リアルタイム同期中';
-      statusTitle.textContent = isConn ? `${providerLabel}: [ ${room} ]` : `🟡 接続確認中: [ ${room} ]`;
+      statusTitle.textContent = isConn ? '🔥 Google Firebase 同期中' : '🟡 Firebase接続確認中...';
       statusTitle.style.color = isConn ? '#1B5E20' : '#E65100';
       const lastTime = localStorage.getItem('vb_last_sync_time') || '接続中';
-      const serverDesc = fbUrl ? 'Google Firebase' : '合言葉サーバー';
-      statusDesc.textContent = `合言葉 [ ${room} ] (${serverDesc}) で全端末と自動共有中 (最新同期: ${lastTime})`;
+      statusDesc.textContent = `全端末とリアルタイムで自動同期中 (最新通信: ${lastTime})`;
     }
     if (homeBtn) {
-      homeBtn.textContent = fbUrl ? '🔥 同期中' : '☁️ 同期中';
+      homeBtn.textContent = '🔥 同期中';
       homeBtn.style.background = '#2E7D32';
     }
     const homeBadge = document.getElementById('homeSyncBadge');
     const homeSub = document.getElementById('homeSyncSubtext');
     if (homeBadge) {
-      homeBadge.textContent = (fbUrl ? '🔥 ' : '🟢 ') + room;
+      homeBadge.textContent = '🔥 同期中';
       homeBadge.style.background = '#A5D6A7';
+      homeBadge.style.color = '#1B5E20';
     }
     if (homeSub) {
       const lastTime = localStorage.getItem('vb_last_sync_time') || '接続完了';
-      const serverDesc = fbUrl ? 'Google Firebase連携' : '共有中';
-      homeSub.textContent = `全端末で${serverDesc} (最新: ${lastTime})`;
+      homeSub.textContent = `Google Firebaseでリアルタイム共有中 (最新: ${lastTime})`;
     }
     if (inputBtn) {
-      inputBtn.textContent = fbUrl ? `🔥●` : `☁️●`;
+      inputBtn.textContent = '🔥●';
       inputBtn.style.background = '#2E7D32';
     }
   } else {
     if (statusCard) {
       statusCard.style.background = '#F5F7FA';
       statusCard.style.borderColor = '#DCE2E8';
-      statusTitle.textContent = '⚪ クラウド同期: 未設定';
+      statusTitle.textContent = '⚪ Firebase同期: 未設定';
       statusTitle.style.color = '#616161';
-      statusDesc.textContent = 'チームで決めた「合言葉」を入力するか、共有URLを開くと自動で同期されます';
+      statusDesc.textContent = '上の枠にFirebaseのURLを設定するか、共有URLを開くと同期されます';
     }
     if (homeBtn) {
       homeBtn.textContent = '☁️ 共有同期';
@@ -1333,10 +1297,11 @@ function updateCloudSyncUI(connectedState) {
     const homeSub = document.getElementById('homeSyncSubtext');
     if (homeBadge) {
       homeBadge.textContent = '未設定';
-      homeBadge.style.background = '#C8E6C9';
+      homeBadge.style.background = '#EEEEEE';
+      homeBadge.style.color = '#616161';
     }
     if (homeSub) {
-      homeSub.textContent = '合言葉を入れると他のiPhoneやPCと自動で繋がります';
+      homeSub.textContent = 'タップしてFirebase URLを設定すると複数端末で共有できます';
     }
     if (inputBtn) {
       inputBtn.textContent = '☁️';
@@ -1345,30 +1310,9 @@ function updateCloudSyncUI(connectedState) {
   }
 }
 
-function saveCloudRoom() {
-  const input = document.getElementById('syncRoomInput');
-  const room = input.value.trim();
-  if (!room) {
-    toast('合言葉を入力してください');
-    return;
-  }
-  localStorage.setItem('vb_sync_room', room);
-  isSyncConnected = true;
-  updateCloudSyncUI(true);
-  toast(`合言葉 [${room}] を設定しました！最新データを同期中...`);
-  connectSyncStream();
-  setTimeout(() => {
-    broadcastSyncAction({ type: 'action', action: 'req_state' });
-  }, 600);
-  syncPullFromCloud().then(() => {
-    syncPushToCloud(true);
-  });
-  startAutoSyncLoop();
-}
-
-function clearCloudRoom() {
-  if (!confirm('合言葉の同期を解除しますか？（端末内のデータは消えません）')) return;
-  localStorage.removeItem('vb_sync_room');
+function clearCloudSync() {
+  if (!confirm('Firebaseの同期を解除しますか？（端末内のデータは消えません）')) return;
+  localStorage.removeItem('vb_firebase_url');
   if (syncEventSource) {
     try { syncEventSource.close(); } catch (e) {}
     syncEventSource = null;
@@ -1757,9 +1701,9 @@ function refreshActiveViews(lastRec, actionType) {
 }
 
 function sendPingTest() {
-  const room = getCloudRoom();
-  if (!room) {
-    toast('まず合言葉を設定してください');
+  const fbUrl = (localStorage.getItem('vb_firebase_url') || '').trim();
+  if (!fbUrl) {
+    toast('まずFirebaseのURLを設定してください');
     return;
   }
   const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
@@ -1781,7 +1725,7 @@ function saveFirebaseDbUrl() {
     toast('🔥 Firebase連携URLを保存しました！');
   } else {
     localStorage.removeItem('vb_firebase_url');
-    toast('Firebase設定を解除しました（合言葉モードに戻ります）');
+    toast('Firebase設定を解除しました');
   }
   const fbBadge = document.getElementById('firebaseActiveBadge');
   if (fbBadge) fbBadge.style.display = url ? 'block' : 'none';
