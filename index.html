@@ -188,6 +188,83 @@
       color: #fff;
     }
 
+    /* ===== CATEGORY FILTER / VISIBILITY ===== */
+    .cat-filter-bar {
+      background: #FFFFFF;
+      border-bottom: 1px solid var(--border);
+      padding: 7px 12px;
+    }
+    .cat-chip-container {
+      display: flex;
+      gap: 6px;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      padding-bottom: 2px;
+    }
+    .cat-chip {
+      flex: 1;
+      min-width: fit-content;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+      padding: 6px 10px;
+      border-radius: 20px;
+      font-size: 0.78rem;
+      font-weight: 700;
+      border: 1.5px solid var(--border);
+      background: #F8F9FA;
+      color: #757575;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.15s ease;
+      user-select: none;
+    }
+    .cat-chip.active {
+      background: #E8F0FE;
+      color: #1565C0;
+      border-color: #1976D2;
+      box-shadow: 0 1px 3px rgba(25, 118, 210, 0.18);
+    }
+    .cat-chip.active#chipReceive {
+      background: #E0F2F1;
+      color: #00796B;
+      border-color: #00897B;
+      box-shadow: 0 1px 3px rgba(0, 137, 123, 0.18);
+    }
+    .cat-chip.active#chipToss {
+      background: #EDE7F6;
+      color: #5E35B1;
+      border-color: #7E57C2;
+      box-shadow: 0 1px 3px rgba(94, 53, 177, 0.18);
+    }
+    .cat-chip.active#chipSpike {
+      background: #FFF3E0;
+      color: #E65100;
+      border-color: #FB8C00;
+      box-shadow: 0 1px 3px rgba(230, 81, 0, 0.18);
+    }
+    .cat-chip:not(.active) {
+      opacity: 0.55;
+      background: #F0F2F5;
+      color: #9E9E9E;
+      border-style: dashed;
+    }
+    .cat-chip .chip-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      display: inline-block;
+    }
+    .cat-chip:not(.active) .chip-dot {
+      background: #BDBDBD !important;
+    }
+    .cat-chip .chip-status {
+      font-size: 0.72rem;
+      font-weight: 900;
+      margin-left: 2px;
+    }
+
     /* ===== PLAYER SELECTOR & COURT MEMBERS ===== */
     .player-header-bar {
       display: flex;
@@ -564,7 +641,10 @@
       </div>
     </div>
 
-    <div style="font-size:0.85rem; font-weight:700; color:var(--text2); margin-bottom:8px;">試合一覧</div>
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+      <span style="font-size:0.85rem; font-weight:700; color:var(--text2);">試合一覧</span>
+      <button class="btn btn-outline btn-sm" id="clearAllMatchesBtn" onclick="askClearAllMatches()" style="display:none; font-size:0.75rem; color:#C62828; border-color:#EF9A9A; padding:2px 8px;">全削除</button>
+    </div>
     <div id="matchList"></div>
   </div>
 </div>
@@ -580,12 +660,39 @@
     <button class="header-btn" onclick="showStats()">集計 📊</button>
   </div>
 
-  <!-- Quick Jump Anchors -->
-  <div style="display:flex; background:#fff; border-bottom:1px solid var(--border); padding:6px 12px; gap:8px; overflow-x:auto;">
-    <button class="btn btn-outline btn-sm" style="flex:1; padding:5px 3px; font-size:0.78rem;" onclick="document.getElementById('secServe').scrollIntoView({behavior:'smooth'})">🏐 サーブ</button>
-    <button class="btn btn-outline btn-sm" style="flex:1; padding:5px 3px; font-size:0.78rem;" onclick="document.getElementById('secReceive').scrollIntoView({behavior:'smooth'})">🛡️ レセプション</button>
-    <button class="btn btn-outline btn-sm" style="flex:1; padding:5px 3px; font-size:0.78rem;" onclick="document.getElementById('secToss').scrollIntoView({behavior:'smooth'})">🎯 トス</button>
-    <button class="btn btn-outline btn-sm" style="flex:1; padding:5px 3px; font-size:0.78rem;" onclick="document.getElementById('secSpike').scrollIntoView({behavior:'smooth'})">💥 スパイク</button>
+  <!-- Category Filter / Visibility Bar -->
+  <div class="cat-filter-bar">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+      <span style="font-size:0.76rem; font-weight:700; color:var(--text2); display:flex; align-items:center; gap:4px;">
+        <span>👁️ 表示する項目</span>
+        <span style="font-size:0.68rem; color:#888; font-weight:normal;">(タップで表示/非表示)</span>
+      </span>
+      <div style="display:flex; gap:6px;">
+        <button class="btn btn-outline btn-sm" id="btnShowAllCats" onclick="setAllCategoriesVisible(true)" style="padding:2px 8px; font-size:0.72rem; border-radius:12px;">全表示</button>
+      </div>
+    </div>
+    <div class="cat-chip-container">
+      <button class="cat-chip active" id="chipServe" onclick="toggleCategory('serve')">
+        <span class="chip-dot" style="background:#1565C0;"></span>
+        <span>🏐 サーブ</span>
+        <span class="chip-status">✓</span>
+      </button>
+      <button class="cat-chip active" id="chipReceive" onclick="toggleCategory('receive')">
+        <span class="chip-dot" style="background:#00796B;"></span>
+        <span>🛡️ レセプション</span>
+        <span class="chip-status">✓</span>
+      </button>
+      <button class="cat-chip active" id="chipToss" onclick="toggleCategory('toss')">
+        <span class="chip-dot" style="background:#5E35B1;"></span>
+        <span>🎯 トス</span>
+        <span class="chip-status">✓</span>
+      </button>
+      <button class="cat-chip active" id="chipSpike" onclick="toggleCategory('spike')">
+        <span class="chip-dot" style="background:#E65100;"></span>
+        <span>💥 スパイク</span>
+        <span class="chip-status">✓</span>
+      </button>
+    </div>
   </div>
 
   <!-- Set Selector -->
@@ -615,11 +722,23 @@
 
       <!-- 3項目同時表示エリア -->
 
+      <!-- 全非表示時の案内 -->
+      <div id="noVisibleCatNotice" style="display:none; text-align:center; padding:30px 10px; color:#78909C; background:#fff; border-radius:12px; border:1px dashed #CFD8DC; margin:10px 0;">
+        <div style="font-size:1.8rem; margin-bottom:8px;">👀</div>
+        <div style="font-weight:700; font-size:0.9rem; margin-bottom:4px;">すべての入力項目が非表示になっています</div>
+        <div style="font-size:0.75rem; margin-bottom:12px;">上の「表示項目」ボタンをタップして表示してください</div>
+        <button class="btn btn-primary btn-sm" onclick="setAllCategoriesVisible(true)">すべての項目を表示</button>
+      </div>
+
       <!-- 1. サーブ効果率 -->
       <div id="secServe" style="background:#fff; border:1px solid #DCE2E8; border-radius:12px; padding:10px 12px; margin-bottom:12px; box-shadow:0 1px 4px rgba(0,0,0,0.04);">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
           <span style="font-size:0.88rem; font-weight:800; color:#1565C0;">🏐 サーブ効果率 (相手レセプションの質)</span>
-          <span style="font-size:0.72rem; color:#757575;">M=直接得点</span>
+          <div style="display:flex; align-items:center; gap:5px;">
+            <span style="font-size:0.72rem; color:#757575;">M=直接得点</span>
+            <button class="btn btn-outline btn-sm" onclick="soloCategory('serve')" style="font-size:0.68rem; padding:1px 6px; border-radius:10px; color:#1565C0; border-color:#90CAF9; background:#E3F2FD;" title="この項目だけ表示">専任</button>
+            <button class="btn btn-outline btn-sm" onclick="toggleCategory('serve')" style="font-size:0.68rem; padding:1px 6px; border-radius:10px; color:#78909C; border-color:#CFD8DC;" title="非表示にする">✕</button>
+          </div>
         </div>
         <div class="action-grid action-grid-serve">
           <button class="action-btn btn-A" onclick="recordAction('serve','A')">A<span class="btn-label">完璧</span></button>
@@ -634,7 +753,11 @@
       <div id="secReceive" style="background:#fff; border:1px solid #DCE2E8; border-radius:12px; padding:10px 12px; margin-bottom:12px; box-shadow:0 1px 4px rgba(0,0,0,0.04);">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
           <span style="font-size:0.88rem; font-weight:800; color:#00796B;">🛡️ レセプション (味方返球の質)</span>
-          <span style="font-size:0.72rem; color:#757575;">M=被エース</span>
+          <div style="display:flex; align-items:center; gap:5px;">
+            <span style="font-size:0.72rem; color:#757575;">M=被エース</span>
+            <button class="btn btn-outline btn-sm" onclick="soloCategory('receive')" style="font-size:0.68rem; padding:1px 6px; border-radius:10px; color:#00796B; border-color:#80CBC4; background:#E0F2F1;" title="この項目だけ表示">専任</button>
+            <button class="btn btn-outline btn-sm" onclick="toggleCategory('receive')" style="font-size:0.68rem; padding:1px 6px; border-radius:10px; color:#78909C; border-color:#CFD8DC;" title="非表示にする">✕</button>
+          </div>
         </div>
         <div class="action-grid action-grid-serve">
           <button class="action-btn btn-A" onclick="recordAction('receive','A')">A<span class="btn-label">完璧</span></button>
@@ -645,11 +768,15 @@
         </div>
       </div>
 
-            <!-- 3. トス (トスの質) -->
+      <!-- 3. トス (トスの質) -->
       <div id="secToss" style="background:#fff; border:1px solid #DCE2E8; border-radius:12px; padding:10px 12px; margin-bottom:12px; box-shadow:0 1px 4px rgba(0,0,0,0.04);">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
           <span style="font-size:0.88rem; font-weight:800; color:#5E35B1;">🎯 トス (トスの質)</span>
-          <span style="font-size:0.72rem; color:#757575;">M=トスミス</span>
+          <div style="display:flex; align-items:center; gap:5px;">
+            <span style="font-size:0.72rem; color:#757575;">M=トスミス</span>
+            <button class="btn btn-outline btn-sm" onclick="soloCategory('toss')" style="font-size:0.68rem; padding:1px 6px; border-radius:10px; color:#5E35B1; border-color:#B39DDB; background:#EDE7F6;" title="この項目だけ表示">専任</button>
+            <button class="btn btn-outline btn-sm" onclick="toggleCategory('toss')" style="font-size:0.68rem; padding:1px 6px; border-radius:10px; color:#78909C; border-color:#CFD8DC;" title="非表示にする">✕</button>
+          </div>
         </div>
         <div class="action-grid action-grid-serve">
           <button class="action-btn btn-A" onclick="recordAction('toss','A')">A<span class="btn-label">完璧</span></button>
@@ -660,11 +787,15 @@
         </div>
       </div>
 
-<!-- 3. スパイク -->
+      <!-- 4. スパイク -->
       <div id="secSpike" style="background:#fff; border:1px solid #DCE2E8; border-radius:12px; padding:10px 12px; margin-bottom:12px; box-shadow:0 1px 4px rgba(0,0,0,0.04);">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
           <span style="font-size:0.88rem; font-weight:800; color:#E65100;">💥 スパイク</span>
-          <span style="font-size:0.72rem; color:#757575;">継続=ラリー継続</span>
+          <div style="display:flex; align-items:center; gap:5px;">
+            <span style="font-size:0.72rem; color:#757575;">継続=ラリー継続</span>
+            <button class="btn btn-outline btn-sm" onclick="soloCategory('spike')" style="font-size:0.68rem; padding:1px 6px; border-radius:10px; color:#E65100; border-color:#FFCC80; background:#FFF3E0;" title="この項目だけ表示">専任</button>
+            <button class="btn btn-outline btn-sm" onclick="toggleCategory('spike')" style="font-size:0.68rem; padding:1px 6px; border-radius:10px; color:#78909C; border-color:#CFD8DC;" title="非表示にする">✕</button>
+          </div>
         </div>
         <div class="action-grid action-grid-spike">
           <button class="action-btn btn-point" onclick="recordAction('spike','point')">得点<span class="btn-label">決定</span></button>
@@ -896,6 +1027,28 @@
   </div>
 </div>
 
+<!-- ============================================================
+     MODAL: CLEAR ALL MATCHES CONFIRM
+     ============================================================ -->
+<div class="modal-overlay hidden" id="clearAllMatchesModal">
+  <div class="modal">
+    <div class="modal-header">
+      <span style="color:#C62828;">試合データの一括全削除</span>
+      <button class="modal-close" onclick="closeClearAllMatches()">✕</button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:0.92rem; line-height:1.4; color:#333;">
+        登録されている<strong>すべての試合と記録データ</strong>を完全に削除しますか？<br>
+        <span style="font-size:0.78rem; color:#78909C; display:block; margin-top:6px;">※連携中のすべての端末およびFirebaseからも完全に消去されます。</span>
+      </p>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline btn-md" onclick="closeClearAllMatches()">キャンセル</button>
+      <button class="btn btn-danger btn-md" onclick="confirmClearAllMatches()">すべて削除する</button>
+    </div>
+  </div>
+</div>
+
 
 <!-- ============================================================
      MODAL: BACKUP & DATA TRANSFER (データ引き継ぎ)
@@ -1053,10 +1206,32 @@ function loadPlayers() {
 }
 function savePlayers(arr) { localStorage.setItem('vb_players', JSON.stringify(arr)); }
 
-function loadMatches() {
-  try { return JSON.parse(localStorage.getItem('vb_matches') || '[]'); } catch { return []; }
+function loadDeletedMatchIds() {
+  try {
+    return new Set(JSON.parse(localStorage.getItem('vb_deleted_match_ids') || '[]'));
+  } catch { return new Set(); }
 }
-function saveMatches(arr) { localStorage.setItem('vb_matches', JSON.stringify(arr)); }
+function saveDeletedMatchIds(set) {
+  try {
+    localStorage.setItem('vb_deleted_match_ids', JSON.stringify(Array.from(set)));
+  } catch {}
+}
+
+function loadMatches() {
+  try {
+    const raw = JSON.parse(localStorage.getItem('vb_matches') || '[]');
+    const delIds = loadDeletedMatchIds();
+    if (!delIds || delIds.size === 0) return raw;
+    return raw.filter(m => m && m.id && !delIds.has(m.id));
+  } catch { return []; }
+}
+function saveMatches(arr) {
+  try {
+    const delIds = loadDeletedMatchIds();
+    const filtered = (arr || []).filter(m => m && m.id && (!delIds || !delIds.has(m.id)));
+    localStorage.setItem('vb_matches', JSON.stringify(filtered));
+  } catch {}
+}
 
 function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
 
@@ -1364,13 +1539,10 @@ function connectSyncStream() {
   const fbUrl = (localStorage.getItem('vb_firebase_url') || '').trim();
   if (fbUrl) {
     try {
-      syncEventSource = new EventSource(`${fbUrl}/rooms/${encodeURIComponent(room)}/actions.json`);
+      syncEventSource = new EventSource(`${fbUrl}/rooms/${encodeURIComponent(room)}/live_action.json`);
       syncEventSource.onopen = () => {
         isSyncConnected = true;
         updateCloudSyncUI(true);
-        setTimeout(() => {
-          broadcastSyncAction({ type: 'action', action: 'req_state' });
-        }, 300);
       };
       syncEventSource.onerror = () => {
         if (syncEventSource && syncEventSource.readyState === 2) {
@@ -1382,17 +1554,11 @@ function connectSyncStream() {
         isSyncConnected = true;
         try {
           const payload = JSON.parse(e.data);
-          if (payload.path === '/') {
-            if (payload.data && typeof payload.data === 'object') {
-              Object.values(payload.data).forEach(act => {
-                if (act) handleIncomingNtfyMessage({ message: JSON.stringify(act) }, true);
-              });
-            }
-          } else if (payload.data) {
+          if (payload && payload.data && typeof payload.data === 'object') {
             handleIncomingNtfyMessage({ message: JSON.stringify(payload.data) }, false);
           }
         } catch (err) {
-          console.warn('Firebase SSE parse error:', err);
+          console.warn('Firebase live action parse error:', err);
         }
       });
       return;
@@ -1510,13 +1676,16 @@ function handleIncomingNtfyMessage(ntfyMsg, isReplay) {
       }
     } else if (data.action === 'sync_matches') {
       if (Array.isArray(data.matches) && data.matches.length > 0) {
+        const delIds = loadDeletedMatchIds();
         let currentMatches = loadMatches();
         let changed = false;
         data.matches.forEach(m => {
-          const idx = currentMatches.findIndex(x => x.id === m.id);
-          if (idx < 0) {
-            currentMatches.push(m);
-            changed = true;
+          if (m && m.id && !delIds.has(m.id)) {
+            const idx = currentMatches.findIndex(x => x.id === m.id);
+            if (idx < 0) {
+              currentMatches.push(m);
+              changed = true;
+            }
           }
         });
         if (changed) {
@@ -1525,18 +1694,43 @@ function handleIncomingNtfyMessage(ntfyMsg, isReplay) {
         }
       }
     } else if (data.action === 'create_match') {
-      let ms = loadMatches();
-      if (data.match && !ms.some(m => m.id === data.match.id)) {
-        ms.push(data.match);
-        saveMatches(ms);
-        renderMatchList();
-        if (!isReplay) toast(`🏐 試合追加: ${data.match.name}`);
+      const delIds = loadDeletedMatchIds();
+      if (data.match && data.match.id && !delIds.has(data.match.id)) {
+        let ms = loadMatches();
+        if (!ms.some(m => m.id === data.match.id)) {
+          ms.push(data.match);
+          saveMatches(ms);
+          renderMatchList();
+          if (!isReplay) toast(`🏐 試合追加: ${data.match.name}`);
+        }
       }
     } else if (data.action === 'del_match') {
-      let ms = loadMatches().filter(m => m.id !== data.matchId);
-      saveMatches(ms);
+      if (data.matchId) {
+        const delIds = loadDeletedMatchIds();
+        delIds.add(data.matchId);
+        saveDeletedMatchIds(delIds);
+        let ms = loadMatches().filter(m => m.id !== data.matchId);
+        saveMatches(ms);
+        if (currentMatchId === data.matchId) {
+          goHome();
+        }
+        renderMatchList();
+        if (!isReplay) toast('試合が削除されました');
+      }
+    } else if (data.action === 'clear_all_matches') {
+      const ms = loadMatches();
+      const delIds = loadDeletedMatchIds();
+      ms.forEach(m => { if (m && m.id) delIds.add(m.id); });
+      if (Array.isArray(data.matchIds)) {
+        data.matchIds.forEach(id => delIds.add(id));
+      }
+      saveDeletedMatchIds(delIds);
+      saveMatches([]);
+      if (currentMatchId) {
+        goHome();
+      }
       renderMatchList();
-      if (!isReplay) toast('試合が削除されました');
+      if (!isReplay) toast('すべての試合が削除されました');
     } else if (data.action === 'ping') {
       toast(`🔔 [${data.senderName || '別端末'}] から通信テストを受信！正常に繋がっています`);
     } else if (data.action === 'req_state') {
@@ -1556,12 +1750,11 @@ function handleIncomingNtfyMessage(ntfyMsg, isReplay) {
 
 function applyRemoteAddRecord(matchId, rec, isReplay) {
   if (!rec || !rec.id) return;
+  const delIds = loadDeletedMatchIds();
+  if (delIds.has(matchId)) return;
   const matches = loadMatches();
   const match = matches.find(m => m.id === matchId);
-  if (!match) {
-    syncPullFromCloud(true);
-    return;
-  }
+  if (!match) return;
   if (!match.records) match.records = [];
   if (match.records.some(r => r.id === rec.id)) return;
 
@@ -1579,6 +1772,8 @@ function applyRemoteAddRecord(matchId, rec, isReplay) {
 
 function applyRemoteDelRecord(matchId, recordId) {
   if (!recordId) return;
+  const delIds = loadDeletedMatchIds();
+  if (delIds.has(matchId)) return;
   const matches = loadMatches();
   const match = matches.find(m => m.id === matchId);
   if (!match || !match.records) return;
@@ -1591,6 +1786,8 @@ function applyRemoteDelRecord(matchId, recordId) {
 
 function applyRemoteEditRecord(matchId, rec) {
   if (!rec || !rec.id) return;
+  const delIds = loadDeletedMatchIds();
+  if (delIds.has(matchId)) return;
   const matches = loadMatches();
   const match = matches.find(m => m.id === matchId);
   if (!match || !match.records) return;
@@ -1607,6 +1804,8 @@ function applyRemoteEditRecord(matchId, rec) {
 
 function applyRemoteCourtSub(matchId, courtPlayers) {
   if (!courtPlayers) return;
+  const delIds = loadDeletedMatchIds();
+  if (delIds.has(matchId)) return;
   const matches = loadMatches();
   const match = matches.find(m => m.id === matchId);
   if (!match) return;
@@ -1621,6 +1820,28 @@ function applyRemoteSnapshot(payload) {
   if (!payload) return;
   let hasChanged = false;
 
+  // Sync deleted match IDs (tombstones)
+  const localDelIds = loadDeletedMatchIds();
+  if (Array.isArray(payload.deletedMatchIds)) {
+    payload.deletedMatchIds.forEach(id => {
+      if (id) localDelIds.add(id);
+    });
+    saveDeletedMatchIds(localDelIds);
+  }
+
+  // Filter out any locally existing matches that were deleted
+  let currentMatches = loadMatches();
+  const filteredMatches = currentMatches.filter(m => !localDelIds.has(m.id));
+  if (filteredMatches.length !== currentMatches.length) {
+    currentMatches = filteredMatches;
+    saveMatches(currentMatches);
+    hasChanged = true;
+  }
+  if (currentMatchId && localDelIds.has(currentMatchId)) {
+    goHome();
+    toast('閲覧中の試合は削除されました');
+  }
+
   // Sync players (timestamp-based: respects additions and deletions across devices)
   if (Array.isArray(payload.players)) {
     const remoteTime = payload.playersUpdatedAt || payload.time || 0;
@@ -1634,10 +1855,10 @@ function applyRemoteSnapshot(payload) {
     }
   }
 
-  // Merge matches
+  // Merge matches (strictly ignore any deleted match IDs)
   if (Array.isArray(payload.matches) && payload.matches.length > 0) {
-    let currentMatches = loadMatches();
     payload.matches.forEach(inM => {
+      if (!inM || !inM.id || localDelIds.has(inM.id)) return;
       const localM = currentMatches.find(m => m.id === inM.id);
       if (!localM) {
         currentMatches.push(inM);
@@ -1747,8 +1968,8 @@ async function broadcastSyncAction(actionObj) {
   const fbUrl = (localStorage.getItem('vb_firebase_url') || '').trim();
   if (fbUrl) {
     try {
-      await fetch(`${fbUrl}/rooms/${encodeURIComponent(room)}/actions.json`, {
-        method: 'POST',
+      await fetch(`${fbUrl}/rooms/${encodeURIComponent(room)}/live_action.json`, {
+        method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(actionObj)
       });
@@ -1791,14 +2012,16 @@ async function syncPushToCloud(isSilent = false) {
 
   try {
     const players = loadPlayers();
-    const matches = loadMatches();
+    const delIds = loadDeletedMatchIds();
+    const matches = loadMatches().filter(m => !delIds.has(m.id));
     const payload = {
       type: 'state_snapshot',
       sender: myClientId,
       time: Date.now(),
       playersUpdatedAt: parseInt(localStorage.getItem('vb_players_updated_at') || '0', 10) || Date.now(),
       players: players,
-      matches: matches
+      matches: matches,
+      deletedMatchIds: Array.from(delIds)
     };
     const jsonStr = JSON.stringify(payload);
 
@@ -1809,6 +2032,9 @@ async function syncPushToCloud(isSilent = false) {
         headers: { 'Content-Type': 'application/json' },
         body: jsonStr
       });
+      // Purge old historical actions.json from Firebase so zombie actions never replay
+      fetch(`${fbUrl}/rooms/${encodeURIComponent(room)}/actions.json`, { method: 'DELETE' }).catch(() => {});
+
       const timeStr = new Date().toLocaleTimeString('ja-JP', { hour:'2-digit', minute:'2-digit', second:'2-digit' });
       localStorage.setItem('vb_last_sync_time', timeStr);
       isSyncConnected = true;
@@ -1846,7 +2072,7 @@ async function syncPullFromCloud(isSilent = false) {
   const fbUrl = (localStorage.getItem('vb_firebase_url') || '').trim();
   if (fbUrl) {
     try {
-      // 1. Pull snapshot if exists
+      // Pull authoritative snapshot only (never replay old accumulated actions)
       const snapRes = await fetch(`${fbUrl}/rooms/${encodeURIComponent(room)}/snapshot.json`);
       if (snapRes.ok) {
         const snap = await snapRes.json();
@@ -1854,21 +2080,11 @@ async function syncPullFromCloud(isSilent = false) {
           applyRemoteSnapshot(snap);
         }
       }
-      // 2. Pull actions
-      const res = await fetch(`${fbUrl}/rooms/${encodeURIComponent(room)}/actions.json`);
-      if (res.ok) {
-        const obj = await res.json();
-        if (obj && typeof obj === 'object') {
-          Object.values(obj).forEach(actionData => {
-            if (actionData) handleIncomingNtfyMessage({ message: JSON.stringify(actionData) }, true);
-          });
-        }
-      }
       const timeStr = new Date().toLocaleTimeString('ja-JP', { hour:'2-digit', minute:'2-digit', second:'2-digit' });
       localStorage.setItem('vb_last_sync_time', timeStr);
       isSyncConnected = true;
       updateCloudSyncUI(true);
-      if (!isSilent) toast('🔄 最新の共有データを同期しました！');
+      if (!isSilent) toast('🔄 最新データを同期しました！');
       return true;
     } catch (e) {
       if (!isSilent) toast('最新データの取得に失敗しました');
@@ -2102,7 +2318,18 @@ function showScreen(id) {
 function goHome() {
   currentMatchId = null;
   selectedPlayer = null;
+  // 削除済み試合の再出現防止クリーンアップ
+  const delIds = loadDeletedMatchIds();
+  if (delIds.size > 0) {
+    const curM = loadMatches();
+    const cleanM = curM.filter(m => !delIds.has(m.id));
+    if (cleanM.length !== curM.length) {
+      saveMatches(cleanM);
+    }
+  }
+
   renderMatchList();
+  applyCategoryVisibility();
   showScreen('homeScreen');
   checkUrlParamsForRoom();
   updateCloudSyncUI();
@@ -2129,7 +2356,16 @@ function backToInput() {
 // ============================================================
 function renderMatchList() {
   const list = document.getElementById('matchList');
-  const ms = loadMatches();
+  const clearBtn = document.getElementById('clearAllMatchesBtn');
+  const delIds = loadDeletedMatchIds();
+  const rawMs = loadMatches();
+  const ms = rawMs.filter(m => !delIds.has(m.id));
+  if (ms.length !== rawMs.length) {
+    saveMatches(ms);
+  }
+  if (clearBtn) {
+    clearBtn.style.display = ms.length > 0 ? 'inline-block' : 'none';
+  }
   if (ms.length === 0) {
     list.innerHTML = '<div style="text-align:center; color:#9e9e9e; padding:30px 0;">登録された試合はありません</div>';
     return;
@@ -2157,9 +2393,9 @@ function openMatch(id) {
   currentSet = 1;
   selectedPlayer = null;
   showAllPlayersMode = false;
-  switchCat('serve');
   selectSet(1);
   renderPlayerBtns();
+  applyCategoryVisibility();
   updateUndoBar();
   showScreen('inputScreen');
 }
@@ -2185,12 +2421,17 @@ function createMatch() {
     courtPlayers: { 1: [...defaultStarters], 2: [...defaultStarters], 3: [...defaultStarters], 4: [...defaultStarters], 5: [...defaultStarters] },
     records: []
   };
+  const delIds = loadDeletedMatchIds();
+  delIds.delete(m.id);
+  saveDeletedMatchIds(delIds);
+
   const ms = loadMatches();
   ms.push(m);
   saveMatches(ms);
   closeNewMatch();
   openMatch(m.id);
   broadcastSyncAction({ type: 'action', action: 'create_match', match: m });
+  syncPushToCloud(true);
 }
 
 function askDeleteMatch(id, name) {
@@ -2201,12 +2442,43 @@ function askDeleteMatch(id, name) {
 function closeDeleteMatch() { document.getElementById('deleteMatchModal').classList.add('hidden'); }
 function confirmDeleteMatch() {
   if (!deleteTargetId) return;
-  const ms = loadMatches().filter(m => m.id !== deleteTargetId);
+  const id = deleteTargetId;
+  const delIds = loadDeletedMatchIds();
+  delIds.add(id);
+  saveDeletedMatchIds(delIds);
+
+  const ms = loadMatches().filter(m => m.id !== id);
   saveMatches(ms);
   closeDeleteMatch();
   renderMatchList();
   toast('試合を削除しました');
-  broadcastSyncAction({ type: 'action', action: 'del_match', matchId: deleteTargetId });
+  broadcastSyncAction({ type: 'action', action: 'del_match', matchId: id });
+  syncPushToCloud(true);
+}
+
+function askClearAllMatches() {
+  document.getElementById('clearAllMatchesModal').classList.remove('hidden');
+}
+function closeClearAllMatches() {
+  document.getElementById('clearAllMatchesModal').classList.add('hidden');
+}
+function confirmClearAllMatches() {
+  const ms = loadMatches();
+  const delIds = loadDeletedMatchIds();
+  const deletedArr = [];
+  ms.forEach(m => {
+    if (m && m.id) {
+      delIds.add(m.id);
+      deletedArr.push(m.id);
+    }
+  });
+  saveDeletedMatchIds(delIds);
+  localStorage.setItem('vb_matches', '[]');
+  closeClearAllMatches();
+  renderMatchList();
+  toast('すべての試合を完全に削除しました');
+  broadcastSyncAction({ type: 'action', action: 'clear_all_matches', matchIds: deletedArr });
+  syncPushToCloud(true);
 }
 
 // ============================================================
@@ -2329,10 +2601,121 @@ function saveSubstituteMembers() {
 }
 
 // ============================================================
+// INPUT CATEGORY VISIBILITY (入力項目の表示/非表示管理)
+// ============================================================
+const ALL_CATEGORIES = ['serve', 'receive', 'toss', 'spike'];
+const CAT_NAMES = {
+  serve: 'サーブ',
+  receive: 'レセプション',
+  toss: 'トス',
+  spike: 'スパイク'
+};
+
+function getVisibleCategories() {
+  try {
+    const saved = localStorage.getItem('vb_visible_categories');
+    if (saved) {
+      const arr = JSON.parse(saved);
+      if (Array.isArray(arr) && arr.length > 0) {
+        const filtered = arr.filter(c => ALL_CATEGORIES.includes(c));
+        if (filtered.length > 0) return new Set(filtered);
+      }
+    }
+  } catch (e) {}
+  return new Set(ALL_CATEGORIES);
+}
+
+function saveVisibleCategories(set) {
+  try {
+    localStorage.setItem('vb_visible_categories', JSON.stringify(Array.from(set)));
+  } catch (e) {}
+}
+
+function applyCategoryVisibility() {
+  const visible = getVisibleCategories();
+  const notice = document.getElementById('noVisibleCatNotice');
+  if (notice) {
+    notice.style.display = visible.size === 0 ? 'block' : 'none';
+  }
+
+  const catMap = {
+    serve: { secId: 'secServe', chipId: 'chipServe' },
+    receive: { secId: 'secReceive', chipId: 'chipReceive' },
+    toss: { secId: 'secToss', chipId: 'chipToss' },
+    spike: { secId: 'secSpike', chipId: 'chipSpike' }
+  };
+
+  ALL_CATEGORIES.forEach(cat => {
+    const isVis = visible.has(cat);
+    const secEl = document.getElementById(catMap[cat].secId);
+    if (secEl) {
+      secEl.style.display = isVis ? 'block' : 'none';
+    }
+    const chipEl = document.getElementById(catMap[cat].chipId);
+    if (chipEl) {
+      chipEl.classList.toggle('active', isVis);
+      const statusSpan = chipEl.querySelector('.chip-status');
+      if (statusSpan) {
+        statusSpan.textContent = isVis ? '✓' : '';
+      }
+    }
+  });
+
+  const allBtn = document.getElementById('btnShowAllCats');
+  if (allBtn) {
+    const isAll = visible.size === ALL_CATEGORIES.length;
+    allBtn.style.background = isAll ? '#1565C0' : '#fff';
+    allBtn.style.color = isAll ? '#fff' : 'var(--text2)';
+    allBtn.style.borderColor = isAll ? '#1565C0' : 'var(--border)';
+    allBtn.textContent = isAll ? '全表示中' : '全表示';
+  }
+}
+
+function toggleCategory(cat) {
+  const visible = getVisibleCategories();
+  if (visible.has(cat)) {
+    if (visible.size <= 1) {
+      toast('⚠️ 最低1つの入力項目は表示しておく必要があります');
+      return;
+    }
+    visible.delete(cat);
+    toast(`${CAT_NAMES[cat] || cat} を非表示にしました`);
+  } else {
+    visible.add(cat);
+    toast(`${CAT_NAMES[cat] || cat} を表示しました`);
+  }
+  saveVisibleCategories(visible);
+  applyCategoryVisibility();
+}
+
+function soloCategory(cat) {
+  const visible = new Set([cat]);
+  saveVisibleCategories(visible);
+  applyCategoryVisibility();
+  toast(`🎯 ${CAT_NAMES[cat] || cat} の専任モード（他を非表示にしました）`);
+  const targetId = cat === 'serve' ? 'secServe' : cat === 'receive' ? 'secReceive' : cat === 'toss' ? 'secToss' : 'secSpike';
+  const el = document.getElementById(targetId);
+  if (el) el.scrollIntoView({ behavior: 'smooth' });
+}
+
+function setAllCategoriesVisible(notify = true) {
+  const visible = new Set(ALL_CATEGORIES);
+  saveVisibleCategories(visible);
+  applyCategoryVisibility();
+  if (notify) toast('すべての入力項目を表示しました');
+}
+
+// ============================================================
 // RECORD ACTIONS (入力処理)
 // ============================================================
 function switchCat(cat) {
   currentCat = cat || 'serve';
+  const visible = getVisibleCategories();
+  if (!visible.has(cat)) {
+    visible.add(cat);
+    saveVisibleCategories(visible);
+    applyCategoryVisibility();
+  }
   const targetId = cat === 'serve' ? 'secServe' : cat === 'receive' ? 'secReceive' : cat === 'toss' ? 'secToss' : 'secSpike';
   const el = document.getElementById(targetId);
   if (el) el.scrollIntoView({ behavior: 'smooth' });
@@ -3252,6 +3635,7 @@ function addPlayer() {
   renderPlayerBtns();
   toast(`${name} を登録しました`);
   broadcastSyncAction({ type: 'action', action: 'add_player', name: name });
+  syncPushToCloud(true);
 }
 function deletePlayer(idx) {
   const players = loadPlayers();
@@ -3263,6 +3647,7 @@ function deletePlayer(idx) {
   renderPlayerBtns();
   toast(`${name} を削除しました`);
   broadcastSyncAction({ type: 'action', action: 'del_player', name: name });
+  syncPushToCloud(true);
 }
 function clearAllPlayers() {
   if (!confirm('登録されている選手をすべて削除しますか？')) return;
@@ -3272,6 +3657,7 @@ function clearAllPlayers() {
   renderPlayerBtns();
   toast('選手名簿をクリアしました');
   broadcastSyncAction({ type: 'action', action: 'clear_players' });
+  syncPushToCloud(true);
 }
 
 // ============================================================
@@ -3297,7 +3683,18 @@ function esc(s) {
     localStorage.setItem('vb_cleaned_chizuru_v2', '1');
   }
 
+  // 削除済み試合の再出現防止クリーンアップ
+  const delIds = loadDeletedMatchIds();
+  if (delIds.size > 0) {
+    const curM = loadMatches();
+    const cleanM = curM.filter(m => !delIds.has(m.id));
+    if (cleanM.length !== curM.length) {
+      saveMatches(cleanM);
+    }
+  }
+
   renderMatchList();
+  applyCategoryVisibility();
   showScreen('homeScreen');
   // Check URL params for auto room join (?room=...)
   checkUrlParamsForRoom();
